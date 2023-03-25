@@ -55,6 +55,6 @@ jobs:
         run: |
           iisreset /stop
           Remove-Item -Recurse -Force -Confirm:$false D:\pos-payment\
-          mkdir D:\web-folder
+          mkdir D:\pos-payment
           Expand-Archive site.zip D:\pos-payment
           iisreset /start
