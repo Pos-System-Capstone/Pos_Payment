@@ -16,7 +16,7 @@ namespace ResoPayment.Controllers
 		[HttpGet(ApiEndPointConstant.Order.OrderEndpoint)]
 		public async Task<IActionResult> CreateNewPayment()
 		{
-			return Ok();
+			return Ok("Tao thanh cong");
 		}
 	}
 }
