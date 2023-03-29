@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System;
+using System.Collections.Generic;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace ResoPayment.Infrastructure.Models
@@ -16,6 +18,7 @@ namespace ResoPayment.Infrastructure.Models
 
         public virtual DbSet<Brand> Brands { get; set; } = null!;
         public virtual DbSet<BrandPaymentProviderMapping> BrandPaymentProviderMappings { get; set; } = null!;
+        public virtual DbSet<Order> Orders { get; set; } = null!;
         public virtual DbSet<PaymentProvider> PaymentProviders { get; set; } = null!;
         public virtual DbSet<Store> Stores { get; set; } = null!;
         public virtual DbSet<Transaction> Transactions { get; set; } = null!;
@@ -78,9 +81,9 @@ namespace ResoPayment.Infrastructure.Models
                     .HasMaxLength(10)
                     .IsUnicode(false);
 
-                entity.HasOne(d => d.Bran)
+                entity.HasOne(d => d.Brand)
                     .WithMany(p => p.BrandPaymentProviderMappings)
-                    .HasForeignKey(d => d.BranId)
+                    .HasForeignKey(d => d.BrandId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_BrandPaymentProviderMapping_Brand");
 
@@ -89,6 +92,30 @@ namespace ResoPayment.Infrastructure.Models
                     .HasForeignKey(d => d.PaymentProviderId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_BrandPaymentProviderMapping_PaymentProvider");
+            });
+
+            modelBuilder.Entity<Order>(entity =>
+            {
+                entity.ToTable("Order");
+
+                entity.HasIndex(e => e.InvoiceId, "UQ_Order_InvoiceId")
+                    .IsUnique();
+
+                entity.Property(e => e.Id).ValueGeneratedNever();
+
+                entity.Property(e => e.InvoiceId)
+                    .HasMaxLength(50)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.Vat).HasColumnName("VAT");
+
+                entity.Property(e => e.Vatamount).HasColumnName("VATAmount");
+
+                entity.HasOne(d => d.Store)
+                    .WithMany(p => p.Orders)
+                    .HasForeignKey(d => d.StoreId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_Order_Store");
             });
 
             modelBuilder.Entity<PaymentProvider>(entity =>

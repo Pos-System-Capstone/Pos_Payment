@@ -7,6 +7,7 @@ namespace ResoPayment.Infrastructure.Models
     {
         public Store()
         {
+            Orders = new HashSet<Order>();
             Transactions = new HashSet<Transaction>();
         }
 
@@ -19,6 +20,7 @@ namespace ResoPayment.Infrastructure.Models
         public string? Status { get; set; }
 
         public virtual Brand Brand { get; set; } = null!;
+        public virtual ICollection<Order> Orders { get; set; }
         public virtual ICollection<Transaction> Transactions { get; set; }
     }
 }
