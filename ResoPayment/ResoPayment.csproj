@@ -16,11 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Extensions\" />
     <Folder Include="Middlewares\" />
-    <Folder Include="Payload\Response\" />
-    <Folder Include="Service\Implements\" />
-    <Folder Include="Service\Interfaces\" />
   </ItemGroup>
 
   <ItemGroup>
