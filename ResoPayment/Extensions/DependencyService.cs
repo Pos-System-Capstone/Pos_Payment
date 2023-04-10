@@ -6,6 +6,7 @@ using Microsoft.OpenApi.Models;
 using ResoPayment.ApplicationCore.Implementations;
 using ResoPayment.ApplicationCore.Interfaces;
 using ResoPayment.Constants;
+using ResoPayment.Infrastructure;
 using ResoPayment.Infrastructure.Models;
 using ResoPayment.Service.Implements;
 using ResoPayment.Service.Interfaces;
@@ -63,6 +64,7 @@ public static class DependencyService
     public static IServiceCollection AddServices(this IServiceCollection services)
     {
         services.AddScoped<IVnPayServices, VnPayService>();
+        services.AddScoped<ITransactionService, TransactionService>();
         return services;
     }
 

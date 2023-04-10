@@ -1,7 +1,9 @@
 ﻿namespace ResoPayment.Payload.Request
 {
-    public class PaymentInformationModel
+    public class PaymentInformationRequest
     {
+	    public Guid OrderId { get; set; }
+	    public string InvoiceId { get; set; }
         public string OrderType { get; set; }
         public double Amount { get; set; }
         public string OrderDescription { get; set; }

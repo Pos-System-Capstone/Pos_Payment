@@ -1,3 +1,4 @@
+using NLog.Web;
 using ResoPayment.Extensions;
 using ResoPayment.Middlewares;
 
@@ -5,12 +6,14 @@ var logger = NLog.LogManager.LoadConfiguration(string.Concat(Directory.GetCurren
 try
 {
     var builder = WebApplication.CreateBuilder(args);
-
+    builder.Logging.ClearProviders();
+    builder.Host.UseNLog();
     // Add services to the container.
 
     builder.Services.AddControllers();
     // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
     builder.Services.AddEndpointsApiExplorer();
+    builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
     builder.Services.AddSwaggerGen();
     builder.Services.AddDatabase();
     builder.Services.AddUnitOfWork();
@@ -21,13 +24,17 @@ try
     var app = builder.Build();
 
     // Configure the HTTP request pipeline.
-    if (app.Environment.IsDevelopment())
+    app.UseSwagger(options =>
     {
-        app.UseSwagger();
-        app.UseSwaggerUI();
-    }
+	    options.RouteTemplate = "pos-payment/{documentName}/swagger.json";
+    });
+	app.UseSwaggerUI(c =>
+	{
+        c.SwaggerEndpoint("v1/swagger.json","My Payment API");
+        c.RoutePrefix = "pos-payment";
+	});
 
-    app.UseMiddleware<ExceptionHandlingMiddleware>();
+        app.UseMiddleware<ExceptionHandlingMiddleware>();
     app.UseAuthentication();
     app.UseAuthorization();
 

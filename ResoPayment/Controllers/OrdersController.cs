@@ -23,14 +23,5 @@ namespace ResoPayment.Controllers
         {
             return Ok("Tao thanh cong");
         }
-
-        [Authorize]
-        [HttpPost(ApiEndPointConstant.Order.OrderEndpoint)]
-        public IActionResult CreatePaymentUrl(PaymentInformationModel model)
-        {
-            var url = _vnPayService.CreatePaymentUrl(model, HttpContext);
-
-            return Redirect(url);
-        }
     }
 }

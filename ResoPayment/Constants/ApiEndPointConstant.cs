@@ -15,4 +15,9 @@ public static class ApiEndPointConstant
 	{
 		public const string OrderEndpoint = ApiEndpoint + "/orders";
 	}
+
+	public static class Payment
+	{
+		public const string PaymentEndpoint = ApiEndpoint + "/payments";
+	}
 }

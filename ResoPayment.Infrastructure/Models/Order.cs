@@ -16,5 +16,6 @@ namespace ResoPayment.Infrastructure.Models
         public Guid StoreId { get; set; }
 
         public virtual Store Store { get; set; } = null!;
+        public virtual Transaction? Transaction { get; set; }
     }
 }

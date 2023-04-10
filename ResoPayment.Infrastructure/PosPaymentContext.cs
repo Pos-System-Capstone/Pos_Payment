@@ -1,9 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata;
+﻿using Microsoft.EntityFrameworkCore;
+using ResoPayment.Infrastructure.Models;
 
-namespace ResoPayment.Infrastructure.Models
+namespace ResoPayment.Infrastructure
 {
     public partial class PosPaymentContext : DbContext
     {

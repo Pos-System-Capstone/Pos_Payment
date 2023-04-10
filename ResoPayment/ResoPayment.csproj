@@ -17,11 +17,14 @@
 
   <ItemGroup>
     <Folder Include="Middlewares\" />
+    <Folder Include="Enums\" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\ResoPayment.ApplicationCore\ResoPayment.ApplicationCore.csproj" />
     <ProjectReference Include="..\ResoPayment.Infrastructure\ResoPayment.Infrastructure.csproj" />
   </ItemGroup>
+
+  <ProjectExtensions><VisualStudio><UserProperties appsettings_1development_1json__JsonSchema="https://json.schemastore.org/appsettings.json" /></VisualStudio></ProjectExtensions>
 
 </Project>
