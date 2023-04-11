@@ -8,10 +8,6 @@ namespace ResoPayment.Infrastructure.Models
         public Guid Id { get; set; }
         public string InvoiceId { get; set; } = null!;
         public double TotalAmount { get; set; }
-        public double DiscountAmount { get; set; }
-        public double FinalAmount { get; set; }
-        public double Vat { get; set; }
-        public double Vatamount { get; set; }
         public DateTime CheckOutDate { get; set; }
         public Guid StoreId { get; set; }
 

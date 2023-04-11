@@ -16,14 +16,6 @@ namespace ResoPayment.Infrastructure.Models
         public string Name { get; set; } = null!;
         public string? PhoneNumber { get; set; }
         public string Status { get; set; } = null!;
-        public string? Vatcode { get; set; }
-        public string? PgppublicKey { get; set; }
-        public string? PgpprivateKey { get; set; }
-        public string? Pgppassword { get; set; }
-        public string? DesKey { get; set; }
-        public string? DesVector { get; set; }
-        public string? AccessToken { get; set; }
-        public string? TaxCode { get; set; }
         public DateTime? CreateDate { get; set; }
 
         public virtual ICollection<BrandPaymentProviderMapping> BrandPaymentProviderMappings { get; set; }

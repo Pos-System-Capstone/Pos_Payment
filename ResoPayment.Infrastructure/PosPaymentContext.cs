@@ -1,4 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System;
+using System.Collections.Generic;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 using ResoPayment.Infrastructure.Models;
 
 namespace ResoPayment.Infrastructure
@@ -29,27 +32,9 @@ namespace ResoPayment.Infrastructure
 
                 entity.Property(e => e.Id).ValueGeneratedNever();
 
-                entity.Property(e => e.AccessToken).IsUnicode(false);
-
                 entity.Property(e => e.CreateDate).HasColumnType("datetime");
 
-                entity.Property(e => e.DesKey).IsUnicode(false);
-
-                entity.Property(e => e.DesVector).IsUnicode(false);
-
                 entity.Property(e => e.Name).HasMaxLength(50);
-
-                entity.Property(e => e.Pgppassword)
-                    .IsUnicode(false)
-                    .HasColumnName("PGPPassword");
-
-                entity.Property(e => e.PgpprivateKey)
-                    .IsUnicode(false)
-                    .HasColumnName("PGPPrivateKey");
-
-                entity.Property(e => e.PgppublicKey)
-                    .IsUnicode(false)
-                    .HasColumnName("PGPPublicKey");
 
                 entity.Property(e => e.PhoneNumber)
                     .HasMaxLength(20)
@@ -58,13 +43,6 @@ namespace ResoPayment.Infrastructure
                 entity.Property(e => e.Status)
                     .HasMaxLength(20)
                     .IsUnicode(false);
-
-                entity.Property(e => e.TaxCode).IsUnicode(false);
-
-                entity.Property(e => e.Vatcode)
-                    .HasMaxLength(50)
-                    .IsUnicode(false)
-                    .HasColumnName("VATCode");
             });
 
             modelBuilder.Entity<BrandPaymentProviderMapping>(entity =>
@@ -104,10 +82,6 @@ namespace ResoPayment.Infrastructure
                 entity.Property(e => e.InvoiceId)
                     .HasMaxLength(50)
                     .IsUnicode(false);
-
-                entity.Property(e => e.Vat).HasColumnName("VAT");
-
-                entity.Property(e => e.Vatamount).HasColumnName("VATAmount");
 
                 entity.HasOne(d => d.Store)
                     .WithMany(p => p.Orders)
@@ -170,6 +144,9 @@ namespace ResoPayment.Infrastructure
             {
                 entity.ToTable("Transaction");
 
+                entity.HasIndex(e => e.OrderId, "UX_Transaction_OrderId")
+                    .IsUnique();
+
                 entity.Property(e => e.Id).ValueGeneratedNever();
 
                 entity.Property(e => e.CurrencyCode).HasMaxLength(10);
@@ -187,6 +164,12 @@ namespace ResoPayment.Infrastructure
                     .HasForeignKey(d => d.BrandId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Transaction_Brand");
+
+                entity.HasOne(d => d.Order)
+                    .WithOne(p => p.Transaction)
+                    .HasForeignKey<Transaction>(d => d.OrderId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_Transaction_Order");
 
                 entity.HasOne(d => d.PaymentProvider)
                     .WithMany(p => p.Transactions)
