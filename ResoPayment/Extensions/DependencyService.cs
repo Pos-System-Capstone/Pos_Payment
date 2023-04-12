@@ -64,6 +64,7 @@ public static class DependencyService
     public static IServiceCollection AddServices(this IServiceCollection services)
     {
         services.AddScoped<IVnPayServices, VnPayService>();
+        services.AddScoped<IZaloPayServices, ZaloPayService>();
         services.AddScoped<ITransactionService, TransactionService>();
         return services;
     }
