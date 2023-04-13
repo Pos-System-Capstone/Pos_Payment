@@ -21,7 +21,7 @@ namespace ResoPayment.PaymentStrategy.PaymentStrategies
             _zaloPayConfig = JsonConvert.DeserializeObject<ZaloPayConfig>(zaloPayConfigJson) ?? throw new InvalidOperationException();
         }
 
-        public CreatePaymentResponse ExecutePayment()
+        public async Task<CreatePaymentResponse> ExecutePayment()
         {
             var embeddata = new { merchantinfo = "DeerCoffee" };
             var items = new[]{
@@ -42,11 +42,12 @@ namespace ResoPayment.PaymentStrategy.PaymentStrategies
                 + param["apptime"] + "|" + param["embeddata"] + "|" + param["item"];
             param.Add("mac", HmacHelper.Compute(ZaloPayHMAC.HMACSHA256, _zaloPayConfig.Key1, data));
 
-            var result = HttpHelper.PostFormAsync(_zaloPayConfig.BaseUrl, param);
+            var result = await HttpHelper.PostFormAsync(_zaloPayConfig.BaseUrl, param);
 
 
             CreatePaymentResponse createPaymentResponse = new CreatePaymentResponse();
-            foreach (var entry in result.Result)
+            createPaymentResponse.Url = "URL";
+            foreach (var entry in result)
             {
                 if (entry.Key == "orderurl")
                 {

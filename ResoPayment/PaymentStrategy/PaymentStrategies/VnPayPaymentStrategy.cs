@@ -26,7 +26,7 @@ public class VnPayPaymentStrategy : IPaymentStrategy
         _vnPayConfig = JsonConvert.DeserializeObject<VnPayConfig>(VnPayConfigJson) ?? throw new InvalidOperationException();
     }
 
-    public CreatePaymentResponse ExecutePayment()
+    public async Task<CreatePaymentResponse> ExecutePayment()
     {
         var VnPayHelper = new VnPayLibrary();
         var timeZoneById = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");

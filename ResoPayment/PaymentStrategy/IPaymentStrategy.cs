@@ -4,5 +4,5 @@ namespace ResoPayment.PaymentStrategy;
 
 public interface IPaymentStrategy
 {
-    CreatePaymentResponse ExecutePayment();
+    Task<CreatePaymentResponse> ExecutePayment();
 }

@@ -74,7 +74,6 @@ public class TransactionService : BaseService<TransactionService>, ITransactionS
         };
         await _unitOfWork.GetRepository<Order>().InsertAsync(newOrder);
         bool isSuccessful = await _unitOfWork.CommitAsync() > 0;
-        CreatePaymentResponse result = new CreatePaymentResponse();
         IPaymentStrategy paymentStrategy;
         if (isSuccessful)
         {
@@ -88,20 +87,22 @@ public class TransactionService : BaseService<TransactionService>, ITransactionS
                     paymentStrategy = new VnPayPaymentStrategy(brandPaymentConfig, _httpContextAccessor.HttpContext,
                         newOrder.Id, createPaymentRequest.OrderDescription, newOrder.TotalAmount,
                         _configuration["PaymentCallBack:ReturnUrl"], _configuration["Vnpay:HashSecret"]);
-                    result = paymentStrategy.ExecutePayment();
+                    return await paymentStrategy.ExecutePayment();
                     break;
                 case PaymentProviderConstant.ZALOPAY:
                     paymentStrategy = new ZaloPayPaymentStrategy(brandPaymentConfig, newOrder.Id, createPaymentRequest.OrderDescription, newOrder.TotalAmount);
-                    result = paymentStrategy.ExecutePayment();
-                    break;
+                    return await paymentStrategy.ExecutePayment();
+                case PaymentProviderConstant.VIETQR:
+                    paymentStrategy = new VietQRPaymentStrategy(brandPaymentConfig, createPaymentRequest.OrderDescription, newOrder.TotalAmount);
+                    return await paymentStrategy.ExecutePayment();
                 default:
-                    break;
+                    throw new BadHttpRequestException("Không tìm thấy payment provider");
             }
         }
         else
         {
             throw new BadHttpRequestException("Tạo mới giao dịch thất bại");
         }
-        return result;
+
     }
 }

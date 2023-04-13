@@ -8,8 +8,8 @@ namespace ZaloPay.Helper
         private static readonly HttpClient httpClient = new HttpClient();
 
         public static async Task<T> PostAsync<T>(string uri, HttpContent content)
-        {
-            var response = await httpClient.PostAsync(uri, content);
+        {  
+            var response = await httpClient.PostAsync(uri, content);          
             var responseString = await response.Content.ReadAsStringAsync();
             return JsonConvert.DeserializeObject<T>(responseString);
         }

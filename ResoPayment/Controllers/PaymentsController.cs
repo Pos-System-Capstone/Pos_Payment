@@ -22,15 +22,6 @@ namespace ResoPayment.Controllers
         }
 
         [Authorize]
-        [HttpPost(ApiEndPointConstant.Payment.ZaloPayEndpoint)]
-        //Hard-code for VN-PAY payment. Need to be refactored after
-        public async Task<IActionResult> CreatePayment()
-        {
-            var url = await _zaloPayServices.CreatePayment(HttpContext);
-            return Ok(url);
-        }
-
-        [Authorize]
         [HttpPost(ApiEndPointConstant.Payment.PaymentEndpoint)]
         [ProducesResponseType(typeof(CreatePaymentResponse), StatusCodes.Status200OK)]
         //Hard-code for VN-PAY payment. Need to be refactored after
