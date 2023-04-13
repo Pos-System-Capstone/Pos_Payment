@@ -11,12 +11,9 @@ namespace ResoPayment.Infrastructure.Models
         public Guid AccountId { get; set; }
         public double Amount { get; set; }
         public string CurrencyCode { get; set; } = null!;
-        public double FcAmount { get; set; }
         public string? Notes { get; set; }
-        public bool? IsIncreaseTransaction { get; set; }
         public string Status { get; set; } = null!;
         public string TransactionCode { get; set; } = null!;
-        public double PaymenProviderFee { get; set; }
         public Guid PaymentProviderId { get; set; }
         public Guid OrderId { get; set; }
 

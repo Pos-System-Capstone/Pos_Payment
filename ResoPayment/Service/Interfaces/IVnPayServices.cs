@@ -7,10 +7,10 @@ namespace ResoPayment.Service.Interfaces
     {
 
 
-	    Task<string> CreatePaymentUrl(PaymentInformationRequest model, HttpContext context);
+	    //Task<string> CreatePaymentUrl(PaymentInformationRequest model, HttpContext context);
 
 
-        PaymentResponseModel PaymentExecute(IQueryCollection collections);
+     //   PaymentResponseModel PaymentExecute(IQueryCollection collections);
 
     }
 }

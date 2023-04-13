@@ -5,7 +5,7 @@ using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace ResoPayment.Extensions
+namespace ResoPayment.Helpers
 {
     public class VnPayLibrary
     {
