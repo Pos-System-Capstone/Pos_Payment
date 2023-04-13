@@ -6,7 +6,7 @@
 	    public string InvoiceId { get; set; }
 	    public Guid StoreId { get; set; }
 	    public Guid AccountId { get; set; }
-        public string PaymentType { get; set; }
+        public Guid PaymentId { get; set; }
         public double Amount { get; set; }
         public string OrderDescription { get; set; }
     }

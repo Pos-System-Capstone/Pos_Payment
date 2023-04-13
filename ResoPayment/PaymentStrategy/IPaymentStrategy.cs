@@ -1,6 +1,8 @@
-﻿namespace ResoPayment.PaymentStrategy;
+﻿using ResoPayment.Payload.Response;
+
+namespace ResoPayment.PaymentStrategy;
 
 public interface IPaymentStrategy
 {
-	string ExecutePayment();
+    CreatePaymentResponse ExecutePayment();
 }

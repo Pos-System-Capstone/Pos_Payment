@@ -16,7 +16,7 @@ namespace ResoPayment.Service.Implements
     {
         private readonly IConfiguration _configuration;
 
-        public ZaloPayService(IUnitOfWork<PosPaymentContext> unitOfWork, ILogger<VnPayService> logger, IHttpContextAccessor httpContextAccessor, IConfiguration configuration) : base(unitOfWork, logger, httpContextAccessor)
+        public ZaloPayService(IUnitOfWork<PosPaymentContext> unitOfWork, ILogger<ZaloPayService> logger, IHttpContextAccessor httpContextAccessor, IConfiguration configuration) : base(unitOfWork, logger, httpContextAccessor, configuration)
         {
             _configuration = configuration;
         }
