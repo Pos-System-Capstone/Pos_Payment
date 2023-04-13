@@ -46,7 +46,7 @@ namespace ResoPayment.PaymentStrategy.PaymentStrategies
 
 
             CreatePaymentResponse createPaymentResponse = new CreatePaymentResponse();
-            createPaymentResponse.Url = "URL";
+            createPaymentResponse.DisplayType = "URL";
             foreach (var entry in result)
             {
                 if (entry.Key == "orderurl")

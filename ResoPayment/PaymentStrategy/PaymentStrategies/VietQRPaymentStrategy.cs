@@ -64,8 +64,8 @@ namespace ResoPayment.PaymentStrategy.PaymentStrategies
                         }
                     }
                 }
-                return createPaymentResponse;
             }
+            return createPaymentResponse;
         }
     }
 }
