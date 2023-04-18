@@ -51,5 +51,10 @@ namespace ResoPayment.Service.Implements
             var result = await HttpHelper.PostFormAsync(createOrderUrl, param);
             return result;
         }
+
+        public Task<int> ExecutedCallback()
+        {
+	        throw new NotImplementedException();
+        }
     }
 }

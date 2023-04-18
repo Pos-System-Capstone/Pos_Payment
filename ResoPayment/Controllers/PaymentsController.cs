@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using ResoPayment.Constants;
 using ResoPayment.Payload.Request;
 using ResoPayment.Payload.Response;
@@ -26,8 +27,8 @@ namespace ResoPayment.Controllers
         [ProducesResponseType(typeof(CreatePaymentResponse), StatusCodes.Status200OK)]
         //Hard-code for VN-PAY payment. Need to be refactored after
         public async Task<IActionResult> CreatePaymentUrl(CreatePaymentRequest createPaymentRequest)
-        {
-            var url = await _transactionService.CreatePayment(createPaymentRequest);
+        { 
+	        var url = await _transactionService.CreatePayment(createPaymentRequest);
             return Ok(url);
         }
 
@@ -43,6 +44,14 @@ namespace ResoPayment.Controllers
             //return Ok(isSuccessful);
             //_transactionService.CreateMapping();
             return Ok();
+        }
+
+        [HttpGet(ApiEndPointConstant.Payment.ZaloPayEndpoint)]
+        public async Task<IActionResult> ZaloPayPaymentCallBack(double? amount, double? discountamount, string? appid, string? checksum, string? apptransid, int? status)
+        {
+            var isSuccessful = await _transactionService.ExecuteZaloPayCallBack(amount, discountamount, appid, checksum, apptransid,
+	            status);
+	        return Ok(isSuccessful);
         }
     }
 }

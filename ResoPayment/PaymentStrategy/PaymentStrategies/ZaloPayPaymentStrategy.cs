@@ -1,4 +1,7 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.OpenApi.Extensions;
+using Newtonsoft.Json;
+using ResoPayment.Constants;
+using ResoPayment.Enums;
 using ResoPayment.Helpers;
 using ResoPayment.Infrastructure.PaymentConfigModels;
 using ZaloPay.Helper.Crypto;
@@ -13,17 +16,19 @@ namespace ResoPayment.PaymentStrategy.PaymentStrategies
         private readonly Guid _orderId;
         private readonly string _orderDescription;
         private readonly double _amount;
-        public ZaloPayPaymentStrategy(string zaloPayConfigJson, Guid orderId, string orderDescription, double amount)
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        public ZaloPayPaymentStrategy(string zaloPayConfigJson, Guid orderId, string orderDescription, double amount, IHttpContextAccessor httpContextAccessor)
         {
             _orderDescription = orderDescription;
             _amount = amount;
+            _httpContextAccessor = httpContextAccessor;
             _orderId = orderId;
             _zaloPayConfig = JsonConvert.DeserializeObject<ZaloPayConfig>(zaloPayConfigJson) ?? throw new InvalidOperationException();
         }
 
         public async Task<CreatePaymentResponse> ExecutePayment()
         {
-            var embeddata = new { merchantinfo = "DeerCoffee" };
+            var embeddata = new { merchantinfo = "DeerCoffee", redirecturl = "https://" + _httpContextAccessor.HttpContext.Request.Host.Value + ApiEndPointConstant.Payment.ZaloPayEndpoint };
             var items = new[]{
                 new { itemid = "it1", itemname = "Thanh toan don hang", itemprice = _amount, itemquantity = 1 } };
 
@@ -37,6 +42,7 @@ namespace ResoPayment.PaymentStrategy.PaymentStrategies
             param.Add("item", JsonConvert.SerializeObject(items));
             param.Add("description", _orderDescription);
             param.Add("bankcode", _zaloPayConfig.BankCode);
+            //param.Add("callbackurl", "https://" + _httpContextAccessor.HttpContext.Request.Host.Value + ApiEndPointConstant.Payment.ZaloPayEndpoint);
 
             var data = _zaloPayConfig.AppId + "|" + param["apptransid"] + "|" + param["appuser"] + "|" + param["amount"] + "|"
                 + param["apptime"] + "|" + param["embeddata"] + "|" + param["item"];
@@ -46,7 +52,7 @@ namespace ResoPayment.PaymentStrategy.PaymentStrategies
 
 
             CreatePaymentResponse createPaymentResponse = new CreatePaymentResponse();
-            createPaymentResponse.DisplayType = "URL";
+            createPaymentResponse.DisplayType = CreatePaymentReturnType.Url;
             foreach (var entry in result)
             {
                 if (entry.Key == "orderurl")

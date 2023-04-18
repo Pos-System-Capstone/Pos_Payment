@@ -5,6 +5,7 @@ using ResoPayment.Infrastructure.PaymentConfigModels;
 using ResoPayment.Payload.Response;
 using static System.Net.Mime.MediaTypeNames;
 using System.Net.Http.Headers;
+using ResoPayment.Enums;
 using ZaloPay.Helper;
 
 namespace ResoPayment.PaymentStrategy.PaymentStrategies
@@ -46,7 +47,7 @@ namespace ResoPayment.PaymentStrategy.PaymentStrategies
             var result = JsonConvert.DeserializeObject<Dictionary<string, object>>(responseString);
 
             CreatePaymentResponse createPaymentResponse = new CreatePaymentResponse();
-            createPaymentResponse.DisplayType = "QR";
+            createPaymentResponse.DisplayType = CreatePaymentReturnType.Qr;
             foreach (var entry in result)
             {
                 if (entry.Key == "desc")

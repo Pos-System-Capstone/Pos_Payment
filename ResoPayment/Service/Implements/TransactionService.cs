@@ -90,7 +90,7 @@ public class TransactionService : BaseService<TransactionService>, ITransactionS
                     return await paymentStrategy.ExecutePayment();
                     break;
                 case PaymentProviderConstant.ZALOPAY:
-                    paymentStrategy = new ZaloPayPaymentStrategy(brandPaymentConfig, newOrder.Id, createPaymentRequest.OrderDescription, newOrder.TotalAmount);
+                    paymentStrategy = new ZaloPayPaymentStrategy(brandPaymentConfig, newOrder.Id, createPaymentRequest.OrderDescription, newOrder.TotalAmount, _httpContextAccessor);
                     return await paymentStrategy.ExecutePayment();
                 case PaymentProviderConstant.VIETQR:
                     paymentStrategy = new VietQRPaymentStrategy(brandPaymentConfig, createPaymentRequest.OrderDescription, newOrder.TotalAmount);
@@ -104,5 +104,23 @@ public class TransactionService : BaseService<TransactionService>, ITransactionS
             throw new BadHttpRequestException("Tạo mới giao dịch thất bại");
         }
 
+    }
+
+    public async Task<bool> ExecuteZaloPayCallBack(double? amount, double? discountamount, string? appid, string? checksum, string? apptransid,
+	    int? status)
+    {
+	    var orderId = apptransid.Substring(apptransid.IndexOf("_") + 1);
+	    var order = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync(predicate: x => x.Id.Equals(Guid.Parse(orderId)));
+	    var transaction = await _unitOfWork.GetRepository<Transaction>()
+		    .SingleOrDefaultAsync(predicate: x => x.OrderId.Equals(order.Id));
+	    if (order == null || transaction == null)
+		    throw new BadHttpRequestException("Không tìm thấy order hoặc transaction cho order");
+	    if (status != 1) transaction.Status = TransactionStatus.Fail.ToString();
+	    else
+	    {
+		    transaction.Status = TransactionStatus.Paid.ToString();
+	    }
+	    _unitOfWork.GetRepository<Transaction>().UpdateAsync(transaction);
+	    return await _unitOfWork.CommitAsync() > 0;
     }
 }

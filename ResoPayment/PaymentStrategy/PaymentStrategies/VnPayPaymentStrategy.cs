@@ -52,7 +52,7 @@ public class VnPayPaymentStrategy : IPaymentStrategy
         CreatePaymentResponse createPaymentResponse = new CreatePaymentResponse();
         createPaymentResponse.Url = paymentUrl;
         createPaymentResponse.Message = "Sussess";
-        createPaymentResponse.DisplayType = "URL";
+        createPaymentResponse.DisplayType = CreatePaymentReturnType.Url;
 
         return createPaymentResponse;
     }

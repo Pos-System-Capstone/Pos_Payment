@@ -11,4 +11,7 @@ public interface ITransactionService
     //	string? vnp_SecureHashType, string? vnp_SecureHash);
 
     Task<CreatePaymentResponse> CreatePayment(CreatePaymentRequest createPaymentRequest);
+
+    Task<bool> ExecuteZaloPayCallBack(double? amount, double? discountamount, string? appid, string? checksum,
+	    string? apptransid, int? status);
 }

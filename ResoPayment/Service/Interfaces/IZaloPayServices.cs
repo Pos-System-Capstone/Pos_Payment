@@ -6,5 +6,7 @@ namespace ResoPayment.Service.Interfaces
     {
         public Task<Dictionary<string, object>> CreatePayment(HttpContext context);
 
+        public Task<int> ExecutedCallback();
+
     }
 }
