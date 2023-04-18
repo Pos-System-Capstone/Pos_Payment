@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using ResoPayment.Constants;
 using ResoPayment.Payload.Request;
+using ResoPayment.Payload.Response;
+using ResoPayment.Service.Implements;
 using ResoPayment.Service.Interfaces;
 
 namespace ResoPayment.Controllers
@@ -12,16 +14,20 @@ namespace ResoPayment.Controllers
     {
 
         private readonly IVnPayServices _vnPayService;
+
         public OrdersController(ILogger<OrdersController> logger, IVnPayServices vnPayService) : base(logger)
         {
             _vnPayService = vnPayService;
+
         }
 
         [Authorize]
         [HttpGet(ApiEndPointConstant.Order.OrderEndpoint)]
+
         public async Task<IActionResult> CreateNewPayment()
         {
             return Ok("Tao thanh cong");
         }
+
     }
 }

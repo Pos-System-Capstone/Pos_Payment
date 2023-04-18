@@ -5,6 +5,7 @@ using Newtonsoft.Json;
 using ResoPayment.Constants;
 using ResoPayment.Payload.Request;
 using ResoPayment.Payload.Response;
+using ResoPayment.Service.Implements;
 using ResoPayment.Service.Interfaces;
 
 namespace ResoPayment.Controllers
@@ -15,11 +16,13 @@ namespace ResoPayment.Controllers
         private readonly IVnPayServices _vnPayService;
         private readonly ITransactionService _transactionService;
         private readonly IZaloPayServices _zaloPayServices;
-        public PaymentsController(ILogger<PaymentsController> logger, IVnPayServices vnPayService, ITransactionService transactionService, IZaloPayServices zaloPayServices) : base(logger)
+        private readonly IPaymentProviderService _paymentProviderService;
+        public PaymentsController(ILogger<PaymentsController> logger, IVnPayServices vnPayService, ITransactionService transactionService, IZaloPayServices zaloPayServices,IPaymentProviderService paymentProviderService) : base(logger)
         {
             _vnPayService = vnPayService;
             _transactionService = transactionService;
             _zaloPayServices = zaloPayServices;
+            _paymentProviderService = paymentProviderService;
         }
 
         [Authorize]
@@ -52,6 +55,15 @@ namespace ResoPayment.Controllers
             var isSuccessful = await _transactionService.ExecuteZaloPayCallBack(amount, discountamount, appid, checksum, apptransid,
 	            status);
 	        return Ok(isSuccessful);
+        }
+
+        [Authorize]
+        [HttpGet(ApiEndPointConstant.Payment.PaymentProviderEndpoint)]
+        [ProducesResponseType(typeof(PaymentProviderResponse), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetListPaymentProviderInBrand()
+        {
+            var res = await _paymentProviderService.GetAllPaymentTypesByBrandId();
+            return Ok(res);
         }
     }
 }
