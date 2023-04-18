@@ -19,5 +19,6 @@ public static class ApiEndPointConstant
 	public static class Payment
 	{
 		public const string PaymentEndpoint = ApiEndpoint + "/payments";
+		public const string ZaloPayEndpoint = PaymentEndpoint + "/zalopay";
 	}
 }
