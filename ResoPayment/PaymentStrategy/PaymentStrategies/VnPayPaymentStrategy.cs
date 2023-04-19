@@ -51,7 +51,7 @@ public class VnPayPaymentStrategy : IPaymentStrategy
 
         CreatePaymentResponse createPaymentResponse = new CreatePaymentResponse();
         createPaymentResponse.Url = paymentUrl;
-        createPaymentResponse.Message = "Sussess";
+        createPaymentResponse.Message = "Đang tiến hành thanh toán";
         createPaymentResponse.DisplayType = CreatePaymentReturnType.Url;
 
         return createPaymentResponse;

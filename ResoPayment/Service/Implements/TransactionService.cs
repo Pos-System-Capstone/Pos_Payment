@@ -57,30 +57,46 @@ public class TransactionService : BaseService<TransactionService>, ITransactionS
             .SingleOrDefaultAsync(predicate: x => x.Id.Equals(createPaymentRequest.PaymentId));
         if (store == null) throw new BadHttpRequestException("Không tìm thấy cửa hàng");
         if (paymentProvider == null) throw new BadHttpRequestException("Không tìm thấy payment provider");
-        var newOrder = new Order()
+        var order = await _unitOfWork.GetRepository<Order>()
+	        .SingleOrDefaultAsync(predicate: x => x.Id.Equals(createPaymentRequest.OrderId));
+        var transaction = await _unitOfWork.GetRepository<Transaction>()
+	        .SingleOrDefaultAsync(predicate: x => x.OrderId.Equals(order.Id));
+        bool isSuccessful = false;
+        Guid transactionId = Guid.Empty;
+        if (order != null && transaction != null)
         {
-            Id = createPaymentRequest.OrderId,
-            InvoiceId = createPaymentRequest.InvoiceId,
-            StoreId = store.Id,
-            TotalAmount = createPaymentRequest.Amount,
-            CheckOutDate = DateTime.UtcNow,
-        };
-        newOrder.Transaction = new Transaction()
+	        transactionId = transaction.Id;
+	        transaction.PaymentProviderId = paymentProvider.Id;
+            _unitOfWork.GetRepository<Transaction>().UpdateAsync(transaction);
+        }
+        else
         {
-            Id = Guid.NewGuid(),
-            StoreId = store.Id,
-            BrandId = store.BrandId,
-            OrderId = newOrder.Id,
-            AccountId = createPaymentRequest.AccountId,
-            Amount = createPaymentRequest.Amount,
-            Status = TransactionStatus.Pending.ToString(),
-            CurrencyCode = "VND",
-            Notes = createPaymentRequest.OrderDescription,
-            PaymentProviderId = paymentProvider.Id,
-            TransactionCode = String.Empty
-        };
-        await _unitOfWork.GetRepository<Order>().InsertAsync(newOrder);
-        bool isSuccessful = await _unitOfWork.CommitAsync() > 0;
+	        var newOrder = new Order()
+	        {
+		        Id = createPaymentRequest.OrderId,
+		        InvoiceId = createPaymentRequest.InvoiceId,
+		        StoreId = store.Id,
+		        TotalAmount = createPaymentRequest.Amount,
+		        CheckOutDate = DateTime.UtcNow,
+	        };
+	        newOrder.Transaction = new Transaction()
+	        {
+		        Id = Guid.NewGuid(),
+		        StoreId = store.Id,
+		        BrandId = store.BrandId,
+		        OrderId = newOrder.Id,
+		        AccountId = createPaymentRequest.AccountId,
+		        Amount = createPaymentRequest.Amount,
+		        Status = TransactionStatus.Pending.ToString(),
+		        CurrencyCode = "VND",
+		        Notes = createPaymentRequest.OrderDescription,
+		        PaymentProviderId = paymentProvider.Id,
+		        TransactionCode = String.Empty
+	        };
+	        await _unitOfWork.GetRepository<Order>().InsertAsync(newOrder);
+	        transactionId = newOrder.Transaction.Id;
+        }
+	    isSuccessful = await _unitOfWork.CommitAsync() > 0;
         IPaymentStrategy paymentStrategy;
         if (isSuccessful)
         {
@@ -92,15 +108,17 @@ public class TransactionService : BaseService<TransactionService>, ITransactionS
             {
                 case PaymentProviderConstant.VNPAY:
                     paymentStrategy = new VnPayPaymentStrategy(brandPaymentConfig, _httpContextAccessor.HttpContext,
-                        newOrder.Id, createPaymentRequest.OrderDescription, newOrder.TotalAmount,
+                        createPaymentRequest.OrderId, createPaymentRequest.OrderDescription, createPaymentRequest.Amount,
                         _configuration["PaymentCallBack:ReturnUrl"], _configuration["Vnpay:HashSecret"]);
                     return await paymentStrategy.ExecutePayment();
-                    break;
                 case PaymentProviderConstant.ZALOPAY:
-                    paymentStrategy = new ZaloPayPaymentStrategy(brandPaymentConfig, newOrder.Id, createPaymentRequest.OrderDescription, newOrder.TotalAmount, _httpContextAccessor);
+                    paymentStrategy = new ZaloPayPaymentStrategy(brandPaymentConfig, createPaymentRequest.OrderId, createPaymentRequest.OrderDescription, createPaymentRequest.Amount, _httpContextAccessor);
                     return await paymentStrategy.ExecutePayment();
                 case PaymentProviderConstant.VIETQR:
-                    paymentStrategy = new VietQRPaymentStrategy(brandPaymentConfig, createPaymentRequest.OrderDescription, newOrder.TotalAmount);
+                    paymentStrategy = new VietQRPaymentStrategy(brandPaymentConfig, createPaymentRequest.OrderDescription, createPaymentRequest.Amount);
+                    return await paymentStrategy.ExecutePayment();
+                case PaymentProviderConstant.CASH:
+	                paymentStrategy = new CashPaymentStrategy(transactionId, _unitOfWork);
                     return await paymentStrategy.ExecutePayment();
                 default:
                     throw new BadHttpRequestException("Không tìm thấy payment provider");

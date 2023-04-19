@@ -13,5 +13,7 @@ public enum CreatePaymentReturnType
     [Description("URL")]
     Url,
     [Description("QR")]
-    Qr
+    Qr,
+    [Description("MESSAGE")]
+    Message
 }

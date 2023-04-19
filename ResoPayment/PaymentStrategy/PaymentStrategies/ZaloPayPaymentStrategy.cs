@@ -51,7 +51,10 @@ namespace ResoPayment.PaymentStrategy.PaymentStrategies
             var result = await HttpHelper.PostFormAsync(_zaloPayConfig.BaseUrl, param);
 
 
-            CreatePaymentResponse createPaymentResponse = new CreatePaymentResponse();
+            CreatePaymentResponse createPaymentResponse = new CreatePaymentResponse()
+            {
+                Message = "Đang tiến hành thanh toán"
+            };
             createPaymentResponse.DisplayType = CreatePaymentReturnType.Url;
             foreach (var entry in result)
             {
