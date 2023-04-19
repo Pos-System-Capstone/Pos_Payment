@@ -29,16 +29,16 @@ public class CashPaymentStrategy : IPaymentStrategy
 		{
 			return new CreatePaymentResponse()
 			{
-				Url = "",
-				Message = "Giao dịch thành công",
+				Url = null,
+				Message = "Thanh toán thành công",
 				DisplayType = CreatePaymentReturnType.Message
 			};
 		}
 
 		return new CreatePaymentResponse()
 		{
-			Url = "",
-			Message = "Giao dịch thất bại",
+			Url = null,
+			Message = "Thanh toán thất bại",
 			DisplayType = CreatePaymentReturnType.Message
 		};
 	}
