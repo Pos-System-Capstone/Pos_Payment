@@ -1,5 +1,6 @@
 ﻿using ResoPayment.Payload.Request;
 using ResoPayment.Payload.Response;
+using ResoPayment.RedisModels;
 
 namespace ResoPayment.Service.Interfaces;
 
@@ -14,4 +15,6 @@ public interface ITransactionService
 
     Task<bool> ExecuteZaloPayCallBack(double? amount, double? discountamount, string? appid, string? checksum,
 	    string? apptransid, int? status);
+
+    Task<OrderData> CheckTransactionStatus(string orderid);
 }

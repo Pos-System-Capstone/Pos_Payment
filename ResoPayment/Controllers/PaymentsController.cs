@@ -7,6 +7,7 @@ using ResoPayment.Payload.Request;
 using ResoPayment.Payload.Response;
 using ResoPayment.Service.Implements;
 using ResoPayment.Service.Interfaces;
+using System.Net;
 
 namespace ResoPayment.Controllers
 {
@@ -54,7 +55,15 @@ namespace ResoPayment.Controllers
         {
             var isSuccessful = await _transactionService.ExecuteZaloPayCallBack(amount, discountamount, appid, checksum, apptransid,
 	            status);
-	        return Ok(isSuccessful);
+
+            if (isSuccessful)
+            {
+                return RedirectPermanent("https://firebasestorage.googleapis.com/v0/b/pos-system-47f93.appspot.com/o/files%2Fpayment-done.png?alt=media&token=284c1b35-e4f2-417e-90e4-a339c4cd7a4e");
+            }
+            else
+            {
+                return RedirectPermanent("https://firebasestorage.googleapis.com/v0/b/pos-system-47f93.appspot.com/o/files%2Fpayment-fail.png?alt=media&token=2b7e58ee-c18f-4ec3-9363-ad1ec83ffc6c");
+            }
         }
 
         [Authorize]
@@ -64,6 +73,14 @@ namespace ResoPayment.Controllers
         {
             var res = await _paymentProviderService.GetAllPaymentTypesByBrandId();
             return Ok(res);
+        }
+
+        [Authorize]
+        [HttpGet(ApiEndPointConstant.Payment.CheckTransactionStatus)]
+        public async Task<IActionResult> CheckTransactionStatus([FromQuery] string orderId)
+        {
+	        var result = await _transactionService.CheckTransactionStatus(orderId);
+            return Ok(result);
         }
     }
 }
