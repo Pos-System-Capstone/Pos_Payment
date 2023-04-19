@@ -1,21 +1,28 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Text;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
+using Newtonsoft.Json;
 using ResoPayment.ApplicationCore.Interfaces;
 using ResoPayment.Constants;
 using ResoPayment.Enums;
+using ResoPayment.Helpers;
 using ResoPayment.Infrastructure;
 using ResoPayment.Infrastructure.Models;
 using ResoPayment.Payload.Request;
 using ResoPayment.Payload.Response;
 using ResoPayment.PaymentStrategy;
 using ResoPayment.PaymentStrategy.PaymentStrategies;
+using ResoPayment.RedisModels;
 using ResoPayment.Service.Interfaces;
 
 namespace ResoPayment.Service.Implements;
 
 public class TransactionService : BaseService<TransactionService>, ITransactionService
 {
-    public TransactionService(IUnitOfWork<PosPaymentContext> unitOfWork, ILogger<TransactionService> logger, IHttpContextAccessor httpContextAccessor, IConfiguration configuration) : base(unitOfWork, logger, httpContextAccessor, configuration)
+    private readonly IDistributedCache _distributedCache;
+    public TransactionService(IUnitOfWork<PosPaymentContext> unitOfWork, ILogger<TransactionService> logger, IHttpContextAccessor httpContextAccessor, IConfiguration configuration, IDistributedCache distributedCache) : base(unitOfWork, logger, httpContextAccessor, configuration)
     {
+	    _distributedCache = distributedCache;
     }
 
     //public async Task<bool> PaymentExecute(string? vnp_Amount, string? vnp_BankCode, string? vnp_BankTranNo,
@@ -115,12 +122,43 @@ public class TransactionService : BaseService<TransactionService>, ITransactionS
 		    .SingleOrDefaultAsync(predicate: x => x.OrderId.Equals(order.Id));
 	    if (order == null || transaction == null)
 		    throw new BadHttpRequestException("Không tìm thấy order hoặc transaction cho order");
-	    if (status != 1) transaction.Status = TransactionStatus.Fail.ToString();
+	    if (status != 1)
+	    {
+		    OrderData orderData = new OrderData()
+		    {
+			    Id = order.Id,
+			    TransactionStatus = TransactionStatus.Fail
+		    };
+		    var orderDataRedis = RedisHelper.EncodeOrderData(orderData);
+		    var redisEntryOption = RedisHelper.SetUpRedisEntryOptions();
+		    await _distributedCache.SetAsync(order.Id.ToString(), orderDataRedis, redisEntryOption);
+            transaction.Status = TransactionStatus.Fail.ToString();
+	    }
 	    else
 	    {
+		    OrderData orderData = new OrderData()
+		    {
+			    Id = order.Id,
+			    TransactionStatus = TransactionStatus.Paid
+		    };
+		    var orderDataRedis = RedisHelper.EncodeOrderData(orderData);
+		    var redisEntryOption = RedisHelper.SetUpRedisEntryOptions();
+		    await _distributedCache.SetAsync(order.Id.ToString(), orderDataRedis, redisEntryOption);
 		    transaction.Status = TransactionStatus.Paid.ToString();
 	    }
 	    _unitOfWork.GetRepository<Transaction>().UpdateAsync(transaction);
 	    return await _unitOfWork.CommitAsync() > 0;
+    }
+
+    public async Task<OrderData> CheckTransactionStatus(string orderid)
+    {
+	    byte[] orderDataBytes = await _distributedCache.GetAsync(orderid);
+	    OrderData orderData = null;
+	    if (orderDataBytes != null)
+	    {
+            string serilizedOrderData = Encoding.UTF8.GetString(orderDataBytes);
+            orderData = JsonConvert.DeserializeObject<OrderData>(serilizedOrderData);
+	    }
+        return orderData;
     }
 }

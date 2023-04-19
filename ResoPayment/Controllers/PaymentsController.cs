@@ -74,5 +74,13 @@ namespace ResoPayment.Controllers
             var res = await _paymentProviderService.GetAllPaymentTypesByBrandId();
             return Ok(res);
         }
+
+        [Authorize]
+        [HttpGet(ApiEndPointConstant.Payment.CheckTransactionStatus)]
+        public async Task<IActionResult> CheckTransactionStatus([FromQuery] string orderId)
+        {
+	        var result = await _transactionService.CheckTransactionStatus(orderId);
+            return Ok(result);
+        }
     }
 }

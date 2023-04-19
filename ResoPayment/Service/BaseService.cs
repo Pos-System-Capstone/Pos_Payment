@@ -8,10 +8,10 @@ namespace ResoPayment.Service;
 
 public abstract class BaseService<T> where T : class
 {
-	protected IUnitOfWork<PosPaymentContext> _unitOfWork;
-	protected ILogger<T> _logger;
-	protected IHttpContextAccessor _httpContextAccessor;
-	protected IConfiguration _configuration;
+	protected readonly IUnitOfWork<PosPaymentContext> _unitOfWork;
+	protected readonly ILogger<T> _logger;
+	protected readonly IHttpContextAccessor _httpContextAccessor;
+	protected readonly IConfiguration _configuration;
 
 	public BaseService(IUnitOfWork<PosPaymentContext> unitOfWork, ILogger<T> logger, IHttpContextAccessor httpContextAccessor, IConfiguration configuration)
 	{

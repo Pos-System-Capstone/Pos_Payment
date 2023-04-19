@@ -19,6 +19,10 @@ try
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
     builder.Services.AddSwaggerGen();
+    builder.Services.AddStackExchangeRedisCache(options =>
+    {
+	    options.Configuration = builder.Configuration["RedisConnectionString"];
+    });
     builder.Services.AddDatabase();
     builder.Services.AddUnitOfWork();
     builder.Services.AddServices();
