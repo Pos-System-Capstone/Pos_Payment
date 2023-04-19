@@ -46,7 +46,10 @@ namespace ResoPayment.PaymentStrategy.PaymentStrategies
             var responseString = await response.Content.ReadAsStringAsync();
             var result = JsonConvert.DeserializeObject<Dictionary<string, object>>(responseString);
 
-            CreatePaymentResponse createPaymentResponse = new CreatePaymentResponse();
+            CreatePaymentResponse createPaymentResponse = new CreatePaymentResponse()
+            {
+                Message = "Đang tiến hành thanh toán"
+            };
             createPaymentResponse.DisplayType = CreatePaymentReturnType.Qr;
             foreach (var entry in result)
             {
