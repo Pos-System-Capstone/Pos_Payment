@@ -24,7 +24,7 @@ public class CashPaymentStrategy : IPaymentStrategy
 		if (transaction == null) throw new BadHttpRequestException("Không tìm thấy giao dịch");
 		transaction.Status = TransactionStatus.Paid.ToString();
 		_unitOfWork.GetRepository<Transaction>().UpdateAsync(transaction);
-		bool isSuccessful =  await _unitOfWork.CommitAsync() > 0s;
+		bool isSuccessful =  await _unitOfWork.CommitAsync() > 0;
 		if (isSuccessful)
 		{
 			return new CreatePaymentResponse()
