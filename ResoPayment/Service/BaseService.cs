@@ -25,4 +25,8 @@ public abstract class BaseService<T> where T : class
 	{
 		return _httpContextAccessor?.HttpContext?.User?.FindFirstValue("storeId");
 	}
+    protected string GetBrandIdFromJwt()
+    {
+        return _httpContextAccessor?.HttpContext?.User?.FindFirstValue("brandId");
+    }
 }

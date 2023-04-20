@@ -21,13 +21,13 @@ namespace ResoPayment.Controllers
 
         }
 
-        [Authorize]
-        [HttpGet(ApiEndPointConstant.Order.OrderEndpoint)]
+        //[Authorize]
+        //[HttpGet(ApiEndPointConstant.Order.OrderEndpoint)]
 
-        public async Task<IActionResult> CreateNewPayment()
-        {
-            return Ok("Tao thanh cong");
-        }
+        //public async Task<IActionResult> CreateNewPayment()
+        //{
+        //    return Ok("Tao thanh cong");
+        //}
 
     }
 }

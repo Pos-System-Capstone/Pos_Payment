@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Linq;
+using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Newtonsoft.Json;
@@ -22,7 +23,7 @@ public class TransactionService : BaseService<TransactionService>, ITransactionS
     private readonly IDistributedCache _distributedCache;
     public TransactionService(IUnitOfWork<PosPaymentContext> unitOfWork, ILogger<TransactionService> logger, IHttpContextAccessor httpContextAccessor, IConfiguration configuration, IDistributedCache distributedCache) : base(unitOfWork, logger, httpContextAccessor, configuration)
     {
-	    _distributedCache = distributedCache;
+        _distributedCache = distributedCache;
     }
 
     //public async Task<bool> PaymentExecute(string? vnp_Amount, string? vnp_BankCode, string? vnp_BankTranNo,
@@ -58,45 +59,45 @@ public class TransactionService : BaseService<TransactionService>, ITransactionS
         if (store == null) throw new BadHttpRequestException("Không tìm thấy cửa hàng");
         if (paymentProvider == null) throw new BadHttpRequestException("Không tìm thấy payment provider");
         var order = await _unitOfWork.GetRepository<Order>()
-	        .SingleOrDefaultAsync(predicate: x => x.Id.Equals(createPaymentRequest.OrderId));
+            .SingleOrDefaultAsync(predicate: x => x.Id.Equals(createPaymentRequest.OrderId));
         var transaction = await _unitOfWork.GetRepository<Transaction>()
-	        .SingleOrDefaultAsync(predicate: x => x.OrderId.Equals(order.Id));
+            .SingleOrDefaultAsync(predicate: x => x.OrderId.Equals(order.Id));
         bool isSuccessful = false;
         Guid transactionId = Guid.Empty;
         if (order != null && transaction != null)
         {
-	        transactionId = transaction.Id;
-	        transaction.PaymentProviderId = paymentProvider.Id;
+            transactionId = transaction.Id;
+            transaction.PaymentProviderId = paymentProvider.Id;
             _unitOfWork.GetRepository<Transaction>().UpdateAsync(transaction);
         }
         else
         {
-	        var newOrder = new Order()
-	        {
-		        Id = createPaymentRequest.OrderId,
-		        InvoiceId = createPaymentRequest.InvoiceId,
-		        StoreId = store.Id,
-		        TotalAmount = createPaymentRequest.Amount,
-		        CheckOutDate = DateTime.UtcNow,
-	        };
-	        newOrder.Transaction = new Transaction()
-	        {
-		        Id = Guid.NewGuid(),
-		        StoreId = store.Id,
-		        BrandId = store.BrandId,
-		        OrderId = newOrder.Id,
-		        AccountId = createPaymentRequest.AccountId,
-		        Amount = createPaymentRequest.Amount,
-		        Status = TransactionStatus.Pending.ToString(),
-		        CurrencyCode = "VND",
-		        Notes = createPaymentRequest.OrderDescription,
-		        PaymentProviderId = paymentProvider.Id,
-		        TransactionCode = String.Empty
-	        };
-	        await _unitOfWork.GetRepository<Order>().InsertAsync(newOrder);
-	        transactionId = newOrder.Transaction.Id;
+            var newOrder = new Order()
+            {
+                Id = createPaymentRequest.OrderId,
+                InvoiceId = createPaymentRequest.InvoiceId,
+                StoreId = store.Id,
+                TotalAmount = createPaymentRequest.Amount,
+                CheckOutDate = DateTime.UtcNow,
+            };
+            newOrder.Transaction = new Transaction()
+            {
+                Id = Guid.NewGuid(),
+                StoreId = store.Id,
+                BrandId = store.BrandId,
+                OrderId = newOrder.Id,
+                AccountId = createPaymentRequest.AccountId,
+                Amount = createPaymentRequest.Amount,
+                Status = TransactionStatus.Pending.ToString(),
+                CurrencyCode = "VND",
+                Notes = createPaymentRequest.OrderDescription,
+                PaymentProviderId = paymentProvider.Id,
+                TransactionCode = String.Empty
+            };
+            await _unitOfWork.GetRepository<Order>().InsertAsync(newOrder);
+            transactionId = newOrder.Transaction.Id;
         }
-	    isSuccessful = await _unitOfWork.CommitAsync() > 0;
+        isSuccessful = await _unitOfWork.CommitAsync() > 0;
         IPaymentStrategy paymentStrategy;
         if (isSuccessful)
         {
@@ -118,7 +119,7 @@ public class TransactionService : BaseService<TransactionService>, ITransactionS
                     paymentStrategy = new VietQRPaymentStrategy(brandPaymentConfig, createPaymentRequest.OrderDescription, createPaymentRequest.Amount);
                     return await paymentStrategy.ExecutePayment();
                 case PaymentProviderConstant.CASH:
-	                paymentStrategy = new CashPaymentStrategy(transactionId, _unitOfWork);
+                    paymentStrategy = new CashPaymentStrategy(transactionId, _unitOfWork);
                     return await paymentStrategy.ExecutePayment();
                 default:
                     throw new BadHttpRequestException("Không tìm thấy payment provider");
@@ -132,51 +133,85 @@ public class TransactionService : BaseService<TransactionService>, ITransactionS
     }
 
     public async Task<bool> ExecuteZaloPayCallBack(double? amount, double? discountamount, string? appid, string? checksum, string? apptransid,
-	    int? status)
+        int? status)
     {
-	    var orderId = apptransid.Substring(apptransid.IndexOf("_") + 1);
-	    var order = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync(predicate: x => x.Id.Equals(Guid.Parse(orderId)));
-	    var transaction = await _unitOfWork.GetRepository<Transaction>()
-		    .SingleOrDefaultAsync(predicate: x => x.OrderId.Equals(order.Id));
-	    if (order == null || transaction == null)
-		    throw new BadHttpRequestException("Không tìm thấy order hoặc transaction cho order");
-	    if (status != 1)
-	    {
-		    OrderData orderData = new OrderData()
-		    {
-			    Id = order.Id,
-			    TransactionStatus = TransactionStatus.Fail
-		    };
-		    var orderDataRedis = RedisHelper.EncodeOrderData(orderData);
-		    var redisEntryOption = RedisHelper.SetUpRedisEntryOptions();
-		    await _distributedCache.SetAsync(order.Id.ToString(), orderDataRedis, redisEntryOption);
+        var orderId = apptransid.Substring(apptransid.IndexOf("_") + 1);
+        var order = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync(predicate: x => x.Id.Equals(Guid.Parse(orderId)));
+        var transaction = await _unitOfWork.GetRepository<Transaction>()
+            .SingleOrDefaultAsync(predicate: x => x.OrderId.Equals(order.Id));
+        if (order == null || transaction == null)
+            throw new BadHttpRequestException("Không tìm thấy order hoặc transaction cho order");
+        if (status != 1)
+        {
+            OrderData orderData = new OrderData()
+            {
+                Id = order.Id,
+                TransactionStatus = TransactionStatus.Fail
+            };
+            var orderDataRedis = RedisHelper.EncodeOrderData(orderData);
+            var redisEntryOption = RedisHelper.SetUpRedisEntryOptions();
+            await _distributedCache.SetAsync(order.Id.ToString(), orderDataRedis, redisEntryOption);
             transaction.Status = TransactionStatus.Fail.ToString();
-	    }
-	    else
-	    {
-		    OrderData orderData = new OrderData()
-		    {
-			    Id = order.Id,
-			    TransactionStatus = TransactionStatus.Paid
-		    };
-		    var orderDataRedis = RedisHelper.EncodeOrderData(orderData);
-		    var redisEntryOption = RedisHelper.SetUpRedisEntryOptions();
-		    await _distributedCache.SetAsync(order.Id.ToString(), orderDataRedis, redisEntryOption);
-		    transaction.Status = TransactionStatus.Paid.ToString();
-	    }
-	    _unitOfWork.GetRepository<Transaction>().UpdateAsync(transaction);
-	    return await _unitOfWork.CommitAsync() > 0;
+        }
+        else
+        {
+            OrderData orderData = new OrderData()
+            {
+                Id = order.Id,
+                TransactionStatus = TransactionStatus.Paid
+            };
+            var orderDataRedis = RedisHelper.EncodeOrderData(orderData);
+            var redisEntryOption = RedisHelper.SetUpRedisEntryOptions();
+            await _distributedCache.SetAsync(order.Id.ToString(), orderDataRedis, redisEntryOption);
+            transaction.Status = TransactionStatus.Paid.ToString();
+        }
+        _unitOfWork.GetRepository<Transaction>().UpdateAsync(transaction);
+        return await _unitOfWork.CommitAsync() > 0;
     }
 
     public async Task<OrderData> CheckTransactionStatus(string orderid)
     {
-	    byte[] orderDataBytes = await _distributedCache.GetAsync(orderid);
-	    OrderData orderData = null;
-	    if (orderDataBytes != null)
-	    {
+        byte[] orderDataBytes = await _distributedCache.GetAsync(orderid);
+        OrderData orderData = null;
+        if (orderDataBytes != null)
+        {
             string serilizedOrderData = Encoding.UTF8.GetString(orderDataBytes);
             orderData = JsonConvert.DeserializeObject<OrderData>(serilizedOrderData);
-	    }
+        }
         return orderData;
+    }
+    public async Task<TransactionReportResponse> GetTransactionReportAsync()
+    {
+        Guid brandId = Guid.Parse(GetBrandIdFromJwt());
+
+
+        var listTransactionOfBrand = await _unitOfWork.GetRepository<Transaction>().GetListAsync(
+            predicate: x => x.BrandId == brandId && x.Status.Equals(TransactionStatus.Paid.ToString())
+            );
+        var listPaymnetProviderId = await _unitOfWork.GetRepository<BrandPaymentProviderMapping>().GetListAsync(
+                 selector: x => x.PaymentProviderId,
+                 predicate: x => x.BrandId.Equals(brandId)
+                 );
+        var paymentProviderOfBrand =
+             await _unitOfWork.GetRepository<PaymentProvider>().GetListAsync(
+                 predicate: x => listPaymnetProviderId.Contains(x.Id) && x.Status.Equals("Active")
+                 );
+        TransactionReportResponse transactionReportResponse = new TransactionReportResponse(listTransactionOfBrand.Count(), listTransactionOfBrand.Aggregate(0.0, (acc, x) => acc + x.Amount), null, null, null);
+
+        transactionReportResponse.ListPaymentProvider = new List<string>();
+        transactionReportResponse.ListTotalTransactionInPaymentProvider = new List<int>();
+        transactionReportResponse.ListTotalAmountInPaymentProvider = new List<double>();
+        foreach (var item in paymentProviderOfBrand)
+        {
+            transactionReportResponse.ListPaymentProvider.Add(item.Name);
+            transactionReportResponse.ListTotalTransactionInPaymentProvider.Add(listTransactionOfBrand.Where(f => f.PaymentProviderId.Equals(item.Id)).Count());
+            transactionReportResponse.ListTotalAmountInPaymentProvider.Add(listTransactionOfBrand.Where(f => f.PaymentProviderId.Equals(item.Id)).Aggregate(0.0, (acc, x) => acc + x.Amount));
+        }
+
+
+
+
+
+        return transactionReportResponse;
     }
 }

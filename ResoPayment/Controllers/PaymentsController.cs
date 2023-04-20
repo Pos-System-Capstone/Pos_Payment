@@ -18,7 +18,7 @@ namespace ResoPayment.Controllers
         private readonly ITransactionService _transactionService;
         private readonly IZaloPayServices _zaloPayServices;
         private readonly IPaymentProviderService _paymentProviderService;
-        public PaymentsController(ILogger<PaymentsController> logger, IVnPayServices vnPayService, ITransactionService transactionService, IZaloPayServices zaloPayServices,IPaymentProviderService paymentProviderService) : base(logger)
+        public PaymentsController(ILogger<PaymentsController> logger, IVnPayServices vnPayService, ITransactionService transactionService, IZaloPayServices zaloPayServices, IPaymentProviderService paymentProviderService) : base(logger)
         {
             _vnPayService = vnPayService;
             _transactionService = transactionService;
@@ -31,8 +31,8 @@ namespace ResoPayment.Controllers
         [ProducesResponseType(typeof(CreatePaymentResponse), StatusCodes.Status200OK)]
         //Hard-code for VN-PAY payment. Need to be refactored after
         public async Task<IActionResult> CreatePaymentUrl(CreatePaymentRequest createPaymentRequest)
-        { 
-	        var url = await _transactionService.CreatePayment(createPaymentRequest);
+        {
+            var url = await _transactionService.CreatePayment(createPaymentRequest);
             return Ok(url);
         }
 
@@ -54,7 +54,7 @@ namespace ResoPayment.Controllers
         public async Task<IActionResult> ZaloPayPaymentCallBack(double? amount, double? discountamount, string? appid, string? checksum, string? apptransid, int? status)
         {
             var isSuccessful = await _transactionService.ExecuteZaloPayCallBack(amount, discountamount, appid, checksum, apptransid,
-	            status);
+                status);
 
             if (isSuccessful)
             {
@@ -79,7 +79,17 @@ namespace ResoPayment.Controllers
         [HttpGet(ApiEndPointConstant.Payment.CheckTransactionStatus)]
         public async Task<IActionResult> CheckTransactionStatus([FromQuery] string orderId)
         {
-	        var result = await _transactionService.CheckTransactionStatus(orderId);
+            var result = await _transactionService.CheckTransactionStatus(orderId);
+            return Ok(result);
+        }
+
+
+        [Authorize]
+        [HttpGet(ApiEndPointConstant.Payment.TransactionReport)]
+        [ProducesResponseType(typeof(TransactionReportResponse), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetBrandTransactionReport()
+        {
+            var result = await _transactionService.GetTransactionReportAsync();
             return Ok(result);
         }
     }
