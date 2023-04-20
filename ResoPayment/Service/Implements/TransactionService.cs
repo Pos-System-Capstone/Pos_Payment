@@ -59,14 +59,13 @@ public class TransactionService : BaseService<TransactionService>, ITransactionS
         if (paymentProvider == null) throw new BadHttpRequestException("Không tìm thấy payment provider");
         var order = await _unitOfWork.GetRepository<Order>()
 	        .SingleOrDefaultAsync(predicate: x => x.Id.Equals(createPaymentRequest.OrderId));
-        var transaction = await _unitOfWork.GetRepository<Transaction>()
-	        .SingleOrDefaultAsync(predicate: x => x.OrderId.Equals(order.Id));
-        bool isSuccessful = false;
         Guid transactionId = Guid.Empty;
-        if (order != null && transaction != null)
-        {
-	        transactionId = transaction.Id;
-	        transaction.PaymentProviderId = paymentProvider.Id;
+        if (order != null)
+        { 
+	        var transaction = await _unitOfWork.GetRepository<Transaction>()
+		        .SingleOrDefaultAsync(predicate: x => x.OrderId.Equals(order.Id));
+            transactionId = transaction.Id; 
+            transaction.PaymentProviderId = paymentProvider.Id;
             _unitOfWork.GetRepository<Transaction>().UpdateAsync(transaction);
         }
         else
@@ -96,7 +95,7 @@ public class TransactionService : BaseService<TransactionService>, ITransactionS
 	        await _unitOfWork.GetRepository<Order>().InsertAsync(newOrder);
 	        transactionId = newOrder.Transaction.Id;
         }
-	    isSuccessful = await _unitOfWork.CommitAsync() > 0;
+	    bool isSuccessful = await _unitOfWork.CommitAsync() > 0;
         IPaymentStrategy paymentStrategy;
         if (isSuccessful)
         {
