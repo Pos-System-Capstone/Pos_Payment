@@ -10,20 +10,18 @@ namespace ResoPayment.PaymentStrategy.PaymentStrategies;
 public class CashPaymentStrategy : IPaymentStrategy
 {
 	private readonly IUnitOfWork<PosPaymentContext> _unitOfWork;
-	private readonly Guid _transactionId;
-	public CashPaymentStrategy( Guid transactionId, IUnitOfWork<PosPaymentContext> unitOfWork)
+	private readonly Transaction _transaction;
+	public CashPaymentStrategy( Transaction transaction, IUnitOfWork<PosPaymentContext> unitOfWork)
 	{
-		_transactionId = transactionId;
+		_transaction = transaction;
 		_unitOfWork = unitOfWork;
 	}
 
 	public async Task<CreatePaymentResponse> ExecutePayment()
 	{
-		var transaction = await _unitOfWork.GetRepository<Transaction>()
-			.SingleOrDefaultAsync(predicate: x => x.Id.Equals(_transactionId));
-		if (transaction == null) throw new BadHttpRequestException("Không tìm thấy giao dịch");
-		transaction.Status = TransactionStatus.Paid.ToString();
-		_unitOfWork.GetRepository<Transaction>().UpdateAsync(transaction);
+		if (_transaction == null) throw new BadHttpRequestException("Không tìm thấy giao dịch");
+		_transaction.Status = TransactionStatus.Paid.ToString();
+		_unitOfWork.GetRepository<Transaction>().UpdateAsync(_transaction);
 		bool isSuccessful =  await _unitOfWork.CommitAsync() > 0;
 		if (isSuccessful)
 		{
