@@ -59,12 +59,12 @@ public class TransactionService : BaseService<TransactionService>, ITransactionS
         if (paymentProvider == null) throw new BadHttpRequestException("Không tìm thấy payment provider");
         var order = await _unitOfWork.GetRepository<Order>()
 	        .SingleOrDefaultAsync(predicate: x => x.Id.Equals(createPaymentRequest.OrderId));
-        Guid transactionId = Guid.Empty;
+        Transaction updatedTransaction;
         if (order != null)
         { 
 	        var transaction = await _unitOfWork.GetRepository<Transaction>()
 		        .SingleOrDefaultAsync(predicate: x => x.OrderId.Equals(order.Id));
-            transactionId = transaction.Id; 
+	        updatedTransaction = transaction;
             transaction.PaymentProviderId = paymentProvider.Id;
             _unitOfWork.GetRepository<Transaction>().UpdateAsync(transaction);
         }
@@ -93,7 +93,7 @@ public class TransactionService : BaseService<TransactionService>, ITransactionS
 		        TransactionCode = String.Empty
 	        };
 	        await _unitOfWork.GetRepository<Order>().InsertAsync(newOrder);
-	        transactionId = newOrder.Transaction.Id;
+	        updatedTransaction = newOrder.Transaction;
         }
 	    bool isSuccessful = await _unitOfWork.CommitAsync() > 0;
         IPaymentStrategy paymentStrategy;
@@ -117,7 +117,7 @@ public class TransactionService : BaseService<TransactionService>, ITransactionS
                     paymentStrategy = new VietQRPaymentStrategy(brandPaymentConfig, createPaymentRequest.OrderDescription, createPaymentRequest.Amount);
                     return await paymentStrategy.ExecutePayment();
                 case PaymentProviderConstant.CASH:
-	                paymentStrategy = new CashPaymentStrategy(transactionId, _unitOfWork);
+	                paymentStrategy = new CashPaymentStrategy(updatedTransaction, _unitOfWork);
                     return await paymentStrategy.ExecutePayment();
                 default:
                     throw new BadHttpRequestException("Không tìm thấy payment provider");
