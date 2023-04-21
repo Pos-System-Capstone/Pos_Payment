@@ -25,31 +25,49 @@ public class TransactionService : BaseService<TransactionService>, ITransactionS
 	    _distributedCache = distributedCache;
     }
 
-    //public async Task<bool> PaymentExecute(string? vnp_Amount, string? vnp_BankCode, string? vnp_BankTranNo,
-    //	string? vnp_CardType, string? vnp_OrderInfo, string? vnp_PayDate, string? vnp_ResponseCode, string? vnp_TmnCode,
-    //	string? vnp_TransactionNo, string? vnp_TxnRef, string? vnp_SecureHashType, string? vnp_SecureHash)
-    //{
-    //	//Get order
-    //	vnp_TxnRef = vnp_TxnRef.Trim();
-    //	var orderId = Guid.Parse(vnp_TxnRef);
-    //	var Order = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync(predicate: x => x.Id.Equals(orderId));
-    //	var transaction = await _unitOfWork.GetRepository<Transaction>().SingleOrDefaultAsync(predicate:x => x.OrderId.Equals(orderId));
-    //	if (vnp_ResponseCode.Equals("00"))
-    //	{
-    //		transaction.Status = TransactionStatus.Paid.ToString();
-    //		transaction.TransactionCode = vnp_TransactionNo;
-    //	}
-    //	else
-    //	{
-    //		transaction.Status = TransactionStatus.Fail.ToString();
-    //		transaction.TransactionCode = vnp_TransactionNo;
-    //	}
-    //	_unitOfWork.GetRepository<Transaction>().UpdateAsync(transaction);
-    //	bool isSuccessful = await _unitOfWork.CommitAsync() > 0;
-    //	return isSuccessful;
-    //}
+	public async Task<bool> ExecuteVnPayCalBack(string? vnp_Amount, string? vnp_BankCode, string? vnp_BankTranNo,
+		string? vnp_CardType, string? vnp_OrderInfo, string? vnp_PayDate, string? vnp_ResponseCode, string? vnp_TmnCode,
+		string? vnp_TransactionNo, string? vnp_TxnRef, string? vnp_SecureHashType, string? vnp_SecureHash)
+	{
+		//Get order
+		vnp_TxnRef = vnp_TxnRef.Trim();
+		var orderId = Guid.Parse(vnp_TxnRef);
+		var transaction = await _unitOfWork.GetRepository<Transaction>().SingleOrDefaultAsync(predicate: x => x.OrderId.Equals(orderId));
+		bool isSuccessful = false;
+		if (vnp_ResponseCode.Equals("00"))
+		{
+			transaction.Status = TransactionStatus.Paid.ToString();
+			transaction.TransactionCode = vnp_TransactionNo;
+			OrderData orderData = new OrderData()
+			{
+				Id = transaction.OrderId,
+				TransactionStatus = TransactionStatus.Paid
+			};
+			var orderDataRedis = RedisHelper.EncodeOrderData(orderData);
+			var redisEntryOption = RedisHelper.SetUpRedisEntryOptions();
+			await _distributedCache.SetAsync(orderData.Id.ToString(), orderDataRedis, redisEntryOption);
+			_unitOfWork.GetRepository<Transaction>().UpdateAsync(transaction);
+			isSuccessful = await _unitOfWork.CommitAsync() > 0;
+		}
+		else
+		{
+			transaction.Status = TransactionStatus.Fail.ToString();
+			transaction.TransactionCode = vnp_TransactionNo;
+			OrderData orderData = new OrderData()
+			{
+				Id = transaction.OrderId,
+				TransactionStatus = TransactionStatus.Fail
+			};
+			var orderDataRedis = RedisHelper.EncodeOrderData(orderData);
+			var redisEntryOption = RedisHelper.SetUpRedisEntryOptions();
+			await _distributedCache.SetAsync(orderData.Id.ToString(), orderDataRedis, redisEntryOption);
+			_unitOfWork.GetRepository<Transaction>().UpdateAsync(transaction);
+			await _unitOfWork.CommitAsync();
+		}
+		return isSuccessful;
+	}
 
-    public async Task<CreatePaymentResponse> CreatePayment(CreatePaymentRequest createPaymentRequest)
+	public async Task<CreatePaymentResponse> CreatePayment(CreatePaymentRequest createPaymentRequest)
     {
         var store = await _unitOfWork.GetRepository<Store>()
             .SingleOrDefaultAsync(predicate: x => x.Id.Equals(createPaymentRequest.StoreId), include: x => x.Include(x => x.Brand));
@@ -108,7 +126,7 @@ public class TransactionService : BaseService<TransactionService>, ITransactionS
                 case PaymentProviderConstant.VNPAY:
                     paymentStrategy = new VnPayPaymentStrategy(brandPaymentConfig, _httpContextAccessor.HttpContext,
                         createPaymentRequest.OrderId, createPaymentRequest.OrderDescription, createPaymentRequest.Amount,
-                        _configuration["PaymentCallBack:ReturnUrl"], _configuration["Vnpay:HashSecret"]);
+                        _configuration["VnPayPaymentCallBack:ReturnUrl"], _configuration["Vnpay:HashSecret"]);
                     return await paymentStrategy.ExecutePayment();
                 case PaymentProviderConstant.ZALOPAY:
                     paymentStrategy = new ZaloPayPaymentStrategy(brandPaymentConfig, createPaymentRequest.OrderId, createPaymentRequest.OrderDescription, createPaymentRequest.Amount, _httpContextAccessor);
