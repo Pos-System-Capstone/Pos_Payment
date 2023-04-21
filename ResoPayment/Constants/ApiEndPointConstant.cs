@@ -20,6 +20,7 @@ public static class ApiEndPointConstant
 	{
 		public const string PaymentEndpoint = ApiEndpoint + "/payments";
 		public const string ZaloPayEndpoint = PaymentEndpoint + "/zalopay";
+		public const string VnPayEndpoint = PaymentEndpoint + "/vnpay";
         public const string PaymentProviderEndpoint = PaymentEndpoint + "/payment-providers";
         public const string CheckTransactionStatus = ApiEndpoint + "/check-transaction-status";
 	}

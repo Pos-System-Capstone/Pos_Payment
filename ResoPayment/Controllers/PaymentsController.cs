@@ -36,18 +36,23 @@ namespace ResoPayment.Controllers
             return Ok(url);
         }
 
-        [HttpGet(ApiEndPointConstant.Payment.PaymentEndpoint)]
+        [HttpGet(ApiEndPointConstant.Payment.VnPayEndpoint)]
         public async Task<IActionResult> PaymentCallBack(string? vnp_Amount, string? vnp_BankCode,
             string? vnp_BankTranNo, string? vnp_CardType, string? vnp_OrderInfo, string? vnp_PayDate,
             string? vnp_ResponseCode, string? vnp_TmnCode, string? vnp_TransactionNo, string? vnp_TxnRef,
             string? vnp_SecureHashType, string? vnp_SecureHash)
         {
-            //bool isSuccessful = await _transactionService.PaymentExecute(vnp_Amount, vnp_BankCode, vnp_BankTranNo,
-            //	vnp_CardType, vnp_OrderInfo, vnp_PayDate, vnp_ResponseCode, vnp_TmnCode, vnp_TransactionNo, vnp_TxnRef,
-            //	vnp_SecureHashType, vnp_SecureHash);
-            //return Ok(isSuccessful);
-            //_transactionService.CreateMapping();
-            return Ok();
+			bool isSuccessful = await _transactionService.ExecuteVnPayCalBack(vnp_Amount, vnp_BankCode, vnp_BankTranNo,
+				vnp_CardType, vnp_OrderInfo, vnp_PayDate, vnp_ResponseCode, vnp_TmnCode, vnp_TransactionNo, vnp_TxnRef,
+				vnp_SecureHashType, vnp_SecureHash);
+			if (isSuccessful)
+			{
+				return RedirectPermanent("https://firebasestorage.googleapis.com/v0/b/pos-system-47f93.appspot.com/o/files%2Fpayment-done.png?alt=media&token=284c1b35-e4f2-417e-90e4-a339c4cd7a4e");
+			}
+			else
+			{
+				return RedirectPermanent("https://firebasestorage.googleapis.com/v0/b/pos-system-47f93.appspot.com/o/files%2Fpayment-fail.png?alt=media&token=2b7e58ee-c18f-4ec3-9363-ad1ec83ffc6c");
+			}
         }
 
         [HttpGet(ApiEndPointConstant.Payment.ZaloPayEndpoint)]
