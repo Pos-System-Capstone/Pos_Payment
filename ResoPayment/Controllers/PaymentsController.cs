@@ -86,5 +86,13 @@ namespace ResoPayment.Controllers
 	        var result = await _transactionService.CheckTransactionStatus(orderId);
             return Ok(result);
         }
+
+        //[Authorize]
+        [HttpGet(ApiEndPointConstant.Payment.PaymentEndpoint)]
+        public async Task<IActionResult> GetPaymentTypeOfOrder([FromQuery] Guid orderId)
+        {
+	        var response = await _transactionService.GetPaymentTypeOfOrder(orderId);
+	        return Ok(response);
+        }
     }
 }
