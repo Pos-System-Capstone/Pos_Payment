@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Security.Cryptography.Xml;
+using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Newtonsoft.Json;
@@ -196,5 +197,18 @@ public class TransactionService : BaseService<TransactionService>, ITransactionS
             orderData = JsonConvert.DeserializeObject<OrderData>(serilizedOrderData);
 	    }
         return orderData;
+    }
+
+    public async Task<GetPaymentTypeOfOrder> GetPaymentTypeOfOrder(Guid orderId)
+    {
+	    GetPaymentTypeOfOrder response = await _unitOfWork.GetRepository<Transaction>().SingleOrDefaultAsync(
+		    selector: x => new GetPaymentTypeOfOrder()
+		    {
+			    OrderId = x.OrderId,
+			    PaymentProviderId = x.PaymentProviderId,
+			    PaymentProviderName = x.PaymentProvider.Name,
+			    PicUrl = x.PaymentProvider.PicUrl
+		    }, predicate: x => x.OrderId.Equals(orderId));
+	    return response;
     }
 }

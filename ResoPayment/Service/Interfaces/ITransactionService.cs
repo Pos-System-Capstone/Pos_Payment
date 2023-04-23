@@ -17,4 +17,6 @@ public interface ITransactionService
 	    string? apptransid, int? status);
 
     Task<OrderData> CheckTransactionStatus(string orderid);
+
+	Task<GetPaymentTypeOfOrder> GetPaymentTypeOfOrder(Guid orderId);
 }
