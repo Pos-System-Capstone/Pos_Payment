@@ -29,7 +29,6 @@ namespace ResoPayment.Controllers
         [Authorize]
         [HttpPost(ApiEndPointConstant.Payment.PaymentEndpoint)]
         [ProducesResponseType(typeof(CreatePaymentResponse), StatusCodes.Status200OK)]
-        //Hard-code for VN-PAY payment. Need to be refactored after
         public async Task<IActionResult> CreatePaymentUrl(CreatePaymentRequest createPaymentRequest)
         { 
 	        var url = await _transactionService.CreatePayment(createPaymentRequest);

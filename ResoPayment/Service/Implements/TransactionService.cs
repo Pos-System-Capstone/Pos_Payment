@@ -121,20 +121,21 @@ public class TransactionService : BaseService<TransactionService>, ITransactionS
                 .SingleOrDefaultAsync(selector: x => x.Config,
                     predicate: x =>
                     x.BrandId.Equals(store.BrandId) && x.PaymentProviderId.Equals(paymentProvider.Id));
-            switch (paymentProvider.Name)
+            PaymentType paymentType = Enum.Parse<PaymentType>(paymentProvider.Type);
+            switch (paymentType)
             {
-                case PaymentProviderConstant.VNPAY:
+                case PaymentType.VNPAY:
                     paymentStrategy = new VnPayPaymentStrategy(brandPaymentConfig, _httpContextAccessor.HttpContext,
                         createPaymentRequest.OrderId, createPaymentRequest.OrderDescription, createPaymentRequest.Amount,
                         _configuration["VnPayPaymentCallBack:ReturnUrl"], _configuration["Vnpay:HashSecret"]);
                     return await paymentStrategy.ExecutePayment();
-                case PaymentProviderConstant.ZALOPAY:
+                case PaymentType.ZALOPAY:
                     paymentStrategy = new ZaloPayPaymentStrategy(brandPaymentConfig, createPaymentRequest.OrderId, createPaymentRequest.OrderDescription, createPaymentRequest.Amount, _httpContextAccessor);
                     return await paymentStrategy.ExecutePayment();
-                case PaymentProviderConstant.VIETQR:
+                case PaymentType.VIETQR:
                     paymentStrategy = new VietQRPaymentStrategy(brandPaymentConfig, createPaymentRequest.OrderDescription, createPaymentRequest.Amount);
                     return await paymentStrategy.ExecutePayment();
-                case PaymentProviderConstant.CASH:
+                case PaymentType.CASH:
 	                paymentStrategy = new CashPaymentStrategy(updatedTransaction, _unitOfWork);
                     return await paymentStrategy.ExecutePayment();
                 default:
