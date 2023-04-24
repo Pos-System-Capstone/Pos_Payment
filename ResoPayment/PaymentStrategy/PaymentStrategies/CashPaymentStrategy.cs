@@ -29,7 +29,7 @@ public class CashPaymentStrategy : IPaymentStrategy
 		_unitOfWork.GetRepository<Transaction>().UpdateAsync(_transaction);
 		OrderData orderData;
 		byte[] orderDataRedis;
-		DistributedCacheEntryOptions redisEntryOption;
+		DistributedCacheEntryOptions redisEntryOption = RedisHelper.SetUpRedisEntryOptions();
 		bool isSuccessful =  await _unitOfWork.CommitAsync() > 0;
 		if (isSuccessful)
 		{
@@ -39,7 +39,6 @@ public class CashPaymentStrategy : IPaymentStrategy
 				TransactionStatus = TransactionStatus.Paid
 			};
 			orderDataRedis = RedisHelper.EncodeOrderData(orderData);
-			redisEntryOption = RedisHelper.SetUpRedisEntryOptions();
 			await _distributedCache.SetAsync(_transaction.OrderId.ToString(), orderDataRedis, redisEntryOption);
 			return new CreatePaymentResponse()
 			{
@@ -54,7 +53,6 @@ public class CashPaymentStrategy : IPaymentStrategy
 			TransactionStatus = TransactionStatus.Fail
 		};
 		orderDataRedis = RedisHelper.EncodeOrderData(orderData);
-		redisEntryOption = RedisHelper.SetUpRedisEntryOptions();
 		await _distributedCache.SetAsync(_transaction.OrderId.ToString(), orderDataRedis, redisEntryOption);
 		return new CreatePaymentResponse()
 		{
