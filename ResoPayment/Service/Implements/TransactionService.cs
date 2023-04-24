@@ -137,7 +137,7 @@ public class TransactionService : BaseService<TransactionService>, ITransactionS
                     paymentStrategy = new VietQRPaymentStrategy(brandPaymentConfig, createPaymentRequest.OrderDescription, createPaymentRequest.Amount);
                     return await paymentStrategy.ExecutePayment();
                 case PaymentType.CASH:
-	                paymentStrategy = new CashPaymentStrategy(updatedTransaction, _unitOfWork);
+	                paymentStrategy = new CashPaymentStrategy(updatedTransaction, _unitOfWork, _distributedCache);
                     return await paymentStrategy.ExecutePayment();
                 default:
                     throw new BadHttpRequestException("Không tìm thấy payment provider");
