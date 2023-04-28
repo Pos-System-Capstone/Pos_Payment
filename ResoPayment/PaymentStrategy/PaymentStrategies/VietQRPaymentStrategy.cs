@@ -25,50 +25,52 @@ namespace ResoPayment.PaymentStrategy.PaymentStrategies
 
         public async Task<CreatePaymentResponse> ExecutePayment()
         {
-            HttpClient client = new HttpClient();
+            //HttpClient client = new HttpClient();
 
-            //Add header
-            client.DefaultRequestHeaders.Accept.Clear();
-            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            client.DefaultRequestHeaders.Add("x-client-id", _vietQRConfig.ClientId);
-            client.DefaultRequestHeaders.Add("x-api-key", _vietQRConfig.ApiKey);
+            ////Add header
+            //client.DefaultRequestHeaders.Accept.Clear();
+            //client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            //client.DefaultRequestHeaders.Add("x-client-id", _vietQRConfig.ClientId);
+            //client.DefaultRequestHeaders.Add("x-api-key", _vietQRConfig.ApiKey);
 
-            //Add request body
-            var values = new Dictionary<string, string>();
-            values.Add("accountNo", _vietQRConfig.AccountNo);
-            values.Add("accountName", _vietQRConfig.AccountName);
-            values.Add("acqId", _vietQRConfig.BankCode);
-            values.Add("amount", _amount.ToString());
-            values.Add("addInfo", _orderDescription);
-            values.Add("template", "print");
-            var content = new FormUrlEncodedContent(values);
-            var response = await client.PostAsync(_vietQRConfig.BaseUrl, content);
-            var responseString = await response.Content.ReadAsStringAsync();
-            var result = JsonConvert.DeserializeObject<Dictionary<string, object>>(responseString);
+            ////Add request body
+            //var values = new Dictionary<string, string>();
+            //values.Add("accountNo", _vietQRConfig.AccountNo);
+            //values.Add("accountName", _vietQRConfig.AccountName);
+            //values.Add("acqId", _vietQRConfig.BankCode);
+            //values.Add("amount", _amount.ToString());
+            //values.Add("addInfo", _orderDescription);
+            //values.Add("template", "print");
+            //var content = new FormUrlEncodedContent(values);
+            //var response = await client.PostAsync(_vietQRConfig.BaseUrl, content);
+            //var responseString = await response.Content.ReadAsStringAsync();
+            //var result = JsonConvert.DeserializeObject<Dictionary<string, object>>(responseString);
+            var imageUrl = string.Format("https://img.vietqr.io/image/{0}-{1}-PfRkt2g.jpg?accountName={2}&amount={3}&addInfo={4}", _vietQRConfig.BankCode, _vietQRConfig.AccountNo, Uri.EscapeDataString(_vietQRConfig.AccountName), _amount.ToString(), _orderDescription);
 
             CreatePaymentResponse createPaymentResponse = new CreatePaymentResponse()
             {
-                Message = "Đang tiến hành thanh toán"
+                Message = "Đang tiến hành thanh toán VietQR"
             };
-            createPaymentResponse.DisplayType = CreatePaymentReturnType.Qr;
-            foreach (var entry in result)
-            {
-                if (entry.Key == "desc")
-                {
-                    createPaymentResponse.Message = entry.Value.ToString();
-                }
-                else if (entry.Key == "data")
-                {
-                    var data = JsonConvert.DeserializeObject<Dictionary<string, string>>(entry.Value.ToString());
-                    foreach (var item in data)
-                    {
-                        if (item.Key == "qrCode")
-                        {
-                            createPaymentResponse.Url = item.Value.ToString();
-                        }
-                    }
-                }
-            }
+            createPaymentResponse.DisplayType = CreatePaymentReturnType.Url;
+            createPaymentResponse.Url = imageUrl;
+            //foreach (var entry in result)
+            //{
+            //    if (entry.Key == "desc")
+            //    {
+            //        createPaymentResponse.Message = entry.Value.ToString();
+            //    }
+            //    else if (entry.Key == "data")
+            //    {
+            //        var data = JsonConvert.DeserializeObject<Dictionary<string, string>>(entry.Value.ToString());
+            //        foreach (var item in data)
+            //        {
+            //            if (item.Key == "qrCode")
+            //            {
+            //                createPaymentResponse.Url = item.Value.ToString();
+            //            }
+            //        }
+            //    }
+            //}
             return createPaymentResponse;
         }
     }
