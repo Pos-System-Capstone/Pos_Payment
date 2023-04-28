@@ -53,7 +53,7 @@ namespace ResoPayment.PaymentStrategy.PaymentStrategies
 
             CreatePaymentResponse createPaymentResponse = new CreatePaymentResponse()
             {
-                Message = "Đang tiến hành thanh toán"
+                Message = "Đang tiến hành thanh toán ZaloPay"
             };
             createPaymentResponse.DisplayType = CreatePaymentReturnType.Url;
             foreach (var entry in result)

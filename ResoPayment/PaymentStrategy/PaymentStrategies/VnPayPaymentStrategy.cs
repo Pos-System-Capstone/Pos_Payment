@@ -52,7 +52,7 @@ public class VnPayPaymentStrategy : IPaymentStrategy
 
         CreatePaymentResponse createPaymentResponse = new CreatePaymentResponse();
         createPaymentResponse.Url = paymentUrl;
-        createPaymentResponse.Message = "Đang tiến hành thanh toán";
+        createPaymentResponse.Message = "Đang tiến hành thanh toán VnPay";
         createPaymentResponse.DisplayType = CreatePaymentReturnType.Url;
 
         return createPaymentResponse;

@@ -43,7 +43,7 @@ public class CashPaymentStrategy : IPaymentStrategy
 			return new CreatePaymentResponse()
 			{
 				Url = null,
-				Message = "Thanh toán thành công",
+				Message = "Đang tiến hành thanh toán tiền mặt",
 				DisplayType = CreatePaymentReturnType.Message
 			};
 		}
