@@ -11,6 +11,14 @@ try
     builder.Host.UseNLog();
     // Add services to the container.
 
+    builder.Services.AddCors(options =>
+    {
+        options.AddPolicy(name: "MyDefaultPolicy", policy =>
+        {
+	        policy.WithOrigins("*").AllowAnyHeader().AllowAnyMethod();
+        });
+    });
+
     builder.Services.AddControllers().AddJsonOptions(x =>
     {
 	    x.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
@@ -42,7 +50,9 @@ try
         c.RoutePrefix = "pos-payment";
 	});
 
-        app.UseMiddleware<ExceptionHandlingMiddleware>();
+	app.UseMiddleware<ExceptionHandlingMiddleware>();
+
+	app.UseCors("MyDefaultPolicy");
     app.UseAuthentication();
     app.UseAuthorization();
 

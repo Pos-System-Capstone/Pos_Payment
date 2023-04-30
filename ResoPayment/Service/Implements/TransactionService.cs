@@ -1,4 +1,4 @@
-﻿using System.Linq;
+﻿using System.Security.Cryptography.Xml;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
@@ -26,31 +26,49 @@ public class TransactionService : BaseService<TransactionService>, ITransactionS
         _distributedCache = distributedCache;
     }
 
-    //public async Task<bool> PaymentExecute(string? vnp_Amount, string? vnp_BankCode, string? vnp_BankTranNo,
-    //	string? vnp_CardType, string? vnp_OrderInfo, string? vnp_PayDate, string? vnp_ResponseCode, string? vnp_TmnCode,
-    //	string? vnp_TransactionNo, string? vnp_TxnRef, string? vnp_SecureHashType, string? vnp_SecureHash)
-    //{
-    //	//Get order
-    //	vnp_TxnRef = vnp_TxnRef.Trim();
-    //	var orderId = Guid.Parse(vnp_TxnRef);
-    //	var Order = await _unitOfWork.GetRepository<Order>().SingleOrDefaultAsync(predicate: x => x.Id.Equals(orderId));
-    //	var transaction = await _unitOfWork.GetRepository<Transaction>().SingleOrDefaultAsync(predicate:x => x.OrderId.Equals(orderId));
-    //	if (vnp_ResponseCode.Equals("00"))
-    //	{
-    //		transaction.Status = TransactionStatus.Paid.ToString();
-    //		transaction.TransactionCode = vnp_TransactionNo;
-    //	}
-    //	else
-    //	{
-    //		transaction.Status = TransactionStatus.Fail.ToString();
-    //		transaction.TransactionCode = vnp_TransactionNo;
-    //	}
-    //	_unitOfWork.GetRepository<Transaction>().UpdateAsync(transaction);
-    //	bool isSuccessful = await _unitOfWork.CommitAsync() > 0;
-    //	return isSuccessful;
-    //}
+	public async Task<bool> ExecuteVnPayCalBack(string? vnp_Amount, string? vnp_BankCode, string? vnp_BankTranNo,
+		string? vnp_CardType, string? vnp_OrderInfo, string? vnp_PayDate, string? vnp_ResponseCode, string? vnp_TmnCode,
+		string? vnp_TransactionNo, string? vnp_TxnRef, string? vnp_SecureHashType, string? vnp_SecureHash)
+	{
+		//Get order
+		vnp_TxnRef = vnp_TxnRef.Trim();
+		var orderId = Guid.Parse(vnp_TxnRef);
+		var transaction = await _unitOfWork.GetRepository<Transaction>().SingleOrDefaultAsync(predicate: x => x.OrderId.Equals(orderId));
+		bool isSuccessful = false;
+		if (vnp_ResponseCode.Equals("00"))
+		{
+			transaction.Status = TransactionStatus.Paid.ToString();
+			transaction.TransactionCode = vnp_TransactionNo;
+			OrderData orderData = new OrderData()
+			{
+				Id = transaction.OrderId,
+				TransactionStatus = TransactionStatus.Paid
+			};
+			var orderDataRedis = RedisHelper.EncodeOrderData(orderData);
+			var redisEntryOption = RedisHelper.SetUpRedisEntryOptions();
+			await _distributedCache.SetAsync(orderData.Id.ToString(), orderDataRedis, redisEntryOption);
+			_unitOfWork.GetRepository<Transaction>().UpdateAsync(transaction);
+			isSuccessful = await _unitOfWork.CommitAsync() > 0;
+		}
+		else
+		{
+			transaction.Status = TransactionStatus.Fail.ToString();
+			transaction.TransactionCode = vnp_TransactionNo;
+			OrderData orderData = new OrderData()
+			{
+				Id = transaction.OrderId,
+				TransactionStatus = TransactionStatus.Fail
+			};
+			var orderDataRedis = RedisHelper.EncodeOrderData(orderData);
+			var redisEntryOption = RedisHelper.SetUpRedisEntryOptions();
+			await _distributedCache.SetAsync(orderData.Id.ToString(), orderDataRedis, redisEntryOption);
+			_unitOfWork.GetRepository<Transaction>().UpdateAsync(transaction);
+			await _unitOfWork.CommitAsync();
+		}
+		return isSuccessful;
+	}
 
-    public async Task<CreatePaymentResponse> CreatePayment(CreatePaymentRequest createPaymentRequest)
+	public async Task<CreatePaymentResponse> CreatePayment(CreatePaymentRequest createPaymentRequest)
     {
         var store = await _unitOfWork.GetRepository<Store>()
             .SingleOrDefaultAsync(predicate: x => x.Id.Equals(createPaymentRequest.StoreId), include: x => x.Include(x => x.Brand));
@@ -59,45 +77,44 @@ public class TransactionService : BaseService<TransactionService>, ITransactionS
         if (store == null) throw new BadHttpRequestException("Không tìm thấy cửa hàng");
         if (paymentProvider == null) throw new BadHttpRequestException("Không tìm thấy payment provider");
         var order = await _unitOfWork.GetRepository<Order>()
-            .SingleOrDefaultAsync(predicate: x => x.Id.Equals(createPaymentRequest.OrderId));
-        var transaction = await _unitOfWork.GetRepository<Transaction>()
-            .SingleOrDefaultAsync(predicate: x => x.OrderId.Equals(order.Id));
-        bool isSuccessful = false;
-        Guid transactionId = Guid.Empty;
-        if (order != null && transaction != null)
-        {
-            transactionId = transaction.Id;
+	        .SingleOrDefaultAsync(predicate: x => x.Id.Equals(createPaymentRequest.OrderId));
+        Transaction updatedTransaction;
+        if (order != null)
+        { 
+	        var transaction = await _unitOfWork.GetRepository<Transaction>()
+		        .SingleOrDefaultAsync(predicate: x => x.OrderId.Equals(order.Id));
+	        updatedTransaction = transaction;
             transaction.PaymentProviderId = paymentProvider.Id;
             _unitOfWork.GetRepository<Transaction>().UpdateAsync(transaction);
         }
         else
         {
-            var newOrder = new Order()
-            {
-                Id = createPaymentRequest.OrderId,
-                InvoiceId = createPaymentRequest.InvoiceId,
-                StoreId = store.Id,
-                TotalAmount = createPaymentRequest.Amount,
-                CheckOutDate = DateTime.UtcNow,
-            };
-            newOrder.Transaction = new Transaction()
-            {
-                Id = Guid.NewGuid(),
-                StoreId = store.Id,
-                BrandId = store.BrandId,
-                OrderId = newOrder.Id,
-                AccountId = createPaymentRequest.AccountId,
-                Amount = createPaymentRequest.Amount,
-                Status = TransactionStatus.Pending.ToString(),
-                CurrencyCode = "VND",
-                Notes = createPaymentRequest.OrderDescription,
-                PaymentProviderId = paymentProvider.Id,
-                TransactionCode = String.Empty
-            };
-            await _unitOfWork.GetRepository<Order>().InsertAsync(newOrder);
-            transactionId = newOrder.Transaction.Id;
+	        var newOrder = new Order()
+	        {
+		        Id = createPaymentRequest.OrderId,
+		        InvoiceId = createPaymentRequest.InvoiceId,
+		        StoreId = store.Id,
+		        TotalAmount = createPaymentRequest.Amount,
+		        CheckOutDate = DateTime.UtcNow,
+	        };
+	        newOrder.Transaction = new Transaction()
+	        {
+		        Id = Guid.NewGuid(),
+		        StoreId = store.Id,
+		        BrandId = store.BrandId,
+		        OrderId = newOrder.Id,
+		        AccountId = createPaymentRequest.AccountId,
+		        Amount = createPaymentRequest.Amount,
+		        Status = TransactionStatus.Pending.ToString(),
+		        CurrencyCode = "VND",
+		        Notes = createPaymentRequest.OrderDescription,
+		        PaymentProviderId = paymentProvider.Id,
+		        TransactionCode = String.Empty
+	        };
+	        await _unitOfWork.GetRepository<Order>().InsertAsync(newOrder);
+	        updatedTransaction = newOrder.Transaction;
         }
-        isSuccessful = await _unitOfWork.CommitAsync() > 0;
+	    bool isSuccessful = await _unitOfWork.CommitAsync() > 0;
         IPaymentStrategy paymentStrategy;
         if (isSuccessful)
         {
@@ -105,21 +122,22 @@ public class TransactionService : BaseService<TransactionService>, ITransactionS
                 .SingleOrDefaultAsync(selector: x => x.Config,
                     predicate: x =>
                     x.BrandId.Equals(store.BrandId) && x.PaymentProviderId.Equals(paymentProvider.Id));
-            switch (paymentProvider.Name)
+            PaymentType paymentType = Enum.Parse<PaymentType>(paymentProvider.Type);
+            switch (paymentType)
             {
-                case PaymentProviderConstant.VNPAY:
+                case PaymentType.VNPAY:
                     paymentStrategy = new VnPayPaymentStrategy(brandPaymentConfig, _httpContextAccessor.HttpContext,
                         createPaymentRequest.OrderId, createPaymentRequest.OrderDescription, createPaymentRequest.Amount,
-                        _configuration["PaymentCallBack:ReturnUrl"], _configuration["Vnpay:HashSecret"]);
+                        _configuration["VnPayPaymentCallBack:ReturnUrl"], _configuration["Vnpay:HashSecret"]);
                     return await paymentStrategy.ExecutePayment();
-                case PaymentProviderConstant.ZALOPAY:
+                case PaymentType.ZALOPAY:
                     paymentStrategy = new ZaloPayPaymentStrategy(brandPaymentConfig, createPaymentRequest.OrderId, createPaymentRequest.OrderDescription, createPaymentRequest.Amount, _httpContextAccessor);
                     return await paymentStrategy.ExecutePayment();
-                case PaymentProviderConstant.VIETQR:
+                case PaymentType.VIETQR:
                     paymentStrategy = new VietQRPaymentStrategy(brandPaymentConfig, createPaymentRequest.OrderDescription, createPaymentRequest.Amount);
                     return await paymentStrategy.ExecutePayment();
-                case PaymentProviderConstant.CASH:
-                    paymentStrategy = new CashPaymentStrategy(transactionId, _unitOfWork);
+                case PaymentType.CASH:
+	                paymentStrategy = new CashPaymentStrategy(updatedTransaction, _unitOfWork, _distributedCache);
                     return await paymentStrategy.ExecutePayment();
                 default:
                     throw new BadHttpRequestException("Không tìm thấy payment provider");
@@ -180,38 +198,17 @@ public class TransactionService : BaseService<TransactionService>, ITransactionS
         }
         return orderData;
     }
-    public async Task<TransactionReportResponse> GetTransactionReportAsync()
+
+    public async Task<GetPaymentTypeOfOrder> GetPaymentTypeOfOrder(Guid orderId)
     {
-        Guid brandId = Guid.Parse(GetBrandIdFromJwt());
-
-
-        var listTransactionOfBrand = await _unitOfWork.GetRepository<Transaction>().GetListAsync(
-            predicate: x => x.BrandId == brandId && x.Status.Equals(TransactionStatus.Paid.ToString())
-            );
-        var listPaymnetProviderId = await _unitOfWork.GetRepository<BrandPaymentProviderMapping>().GetListAsync(
-                 selector: x => x.PaymentProviderId,
-                 predicate: x => x.BrandId.Equals(brandId)
-                 );
-        var paymentProviderOfBrand =
-             await _unitOfWork.GetRepository<PaymentProvider>().GetListAsync(
-                 predicate: x => listPaymnetProviderId.Contains(x.Id) && x.Status.Equals("Active")
-                 );
-        TransactionReportResponse transactionReportResponse = new TransactionReportResponse(listTransactionOfBrand.Count(), listTransactionOfBrand.Aggregate(0.0, (acc, x) => acc + x.Amount), null, null, null);
-
-        transactionReportResponse.ListPaymentProvider = new List<string>();
-        transactionReportResponse.ListTotalTransactionInPaymentProvider = new List<int>();
-        transactionReportResponse.ListTotalAmountInPaymentProvider = new List<double>();
-        foreach (var item in paymentProviderOfBrand)
-        {
-            transactionReportResponse.ListPaymentProvider.Add(item.Name);
-            transactionReportResponse.ListTotalTransactionInPaymentProvider.Add(listTransactionOfBrand.Where(f => f.PaymentProviderId.Equals(item.Id)).Count());
-            transactionReportResponse.ListTotalAmountInPaymentProvider.Add(listTransactionOfBrand.Where(f => f.PaymentProviderId.Equals(item.Id)).Aggregate(0.0, (acc, x) => acc + x.Amount));
-        }
-
-
-
-
-
-        return transactionReportResponse;
+	    GetPaymentTypeOfOrder response = await _unitOfWork.GetRepository<Transaction>().SingleOrDefaultAsync(
+		    selector: x => new GetPaymentTypeOfOrder()
+		    {
+			    OrderId = x.OrderId,
+			    PaymentProviderId = x.PaymentProviderId,
+			    PaymentProviderName = x.PaymentProvider.Name,
+			    PicUrl = x.PaymentProvider.PicUrl
+		    }, predicate: x => x.OrderId.Equals(orderId));
+	    return response;
     }
 }

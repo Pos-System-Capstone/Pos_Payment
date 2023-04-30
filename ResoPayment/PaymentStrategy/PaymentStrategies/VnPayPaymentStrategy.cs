@@ -43,6 +43,7 @@ public class VnPayPaymentStrategy : IPaymentStrategy
         pay.AddRequestData("vnp_CurrCode", _vnPayConfig.CurrCode);
         pay.AddRequestData("vnp_IpAddr", pay.GetIpAddress(_context));
         pay.AddRequestData("vnp_Locale", "vn");
+        pay.AddRequestData("vnp_BankCode", "VNPAYQR");
         pay.AddRequestData("vnp_OrderInfo", _orderDescription);
         pay.AddRequestData("vnp_ReturnUrl", urlCallBack);
         pay.AddRequestData("vnp_TxnRef", _orderId.ToString());
@@ -51,7 +52,7 @@ public class VnPayPaymentStrategy : IPaymentStrategy
 
         CreatePaymentResponse createPaymentResponse = new CreatePaymentResponse();
         createPaymentResponse.Url = paymentUrl;
-        createPaymentResponse.Message = "Đang tiến hành thanh toán";
+        createPaymentResponse.Message = "Đang tiến hành thanh toán VnPay";
         createPaymentResponse.DisplayType = CreatePaymentReturnType.Url;
 
         return createPaymentResponse;

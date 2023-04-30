@@ -18,7 +18,6 @@ namespace ResoPayment.Infrastructure.Models
         public string? PhoneNumber { get; set; }
         public string? Address { get; set; }
         public string? Description { get; set; }
-        public string? SchemaConfig { get; set; }
         public string Status { get; set; } = null!;
 
         public virtual ICollection<BrandPaymentProviderMapping> BrandPaymentProviderMappings { get; set; }
