@@ -222,6 +222,29 @@ public class TransactionService : BaseService<TransactionService>, ITransactionS
 		    .SingleOrDefaultAsync(predicate: x => x.OrderId.Equals(order.Id));
 	    transaction.Status = updateTransactionStatusRequest.TransactionStatus.GetDisplayName();
 		_unitOfWork.GetRepository<Transaction>().UpdateAsync(transaction);
-		return await _unitOfWork.CommitAsync() > 0;
+		bool isSuccessful =  await _unitOfWork.CommitAsync() > 0;
+		if (isSuccessful)
+		{
+			OrderData orderData = new OrderData()
+			{
+				Id = order.Id,
+				TransactionStatus = updateTransactionStatusRequest.TransactionStatus
+			};
+			var orderDataRedis = RedisHelper.EncodeOrderData(orderData);
+			var redisEntryOption = RedisHelper.SetUpRedisEntryOptions();
+			await _distributedCache.SetAsync(order.Id.ToString(), orderDataRedis, redisEntryOption);
+		}
+		else
+		{
+			OrderData orderData = new OrderData()
+			{
+				Id = order.Id,
+				TransactionStatus = TransactionStatus.Fail
+			};
+			var orderDataRedis = RedisHelper.EncodeOrderData(orderData);
+			var redisEntryOption = RedisHelper.SetUpRedisEntryOptions();
+			await _distributedCache.SetAsync(order.Id.ToString(), orderDataRedis, redisEntryOption);
+		}
+		return isSuccessful;
     }
 }
