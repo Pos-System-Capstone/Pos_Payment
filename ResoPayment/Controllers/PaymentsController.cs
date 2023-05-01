@@ -98,10 +98,9 @@ namespace ResoPayment.Controllers
 
         [Authorize]
         [HttpPost(ApiEndPointConstant.Payment.VietQrEndpoint)]
-        public async Task<IActionResult> UpdateOrderStatusVietQrTransaction([FromBody] Guid orderId,
-	        [FromBody] TransactionStatus transactionStatus)
+        public async Task<IActionResult> UpdateOrderStatusVietQrTransaction([FromBody] UpdateTransactionStatusRequest updateTransactionStatusRequest)
         {
-	        var isSuccessful = await _transactionService.UpdateOrderStatusVietQrTransaction(orderId, transactionStatus);
+	        var isSuccessful = await _transactionService.UpdateOrderStatusVietQrTransaction(updateTransactionStatusRequest);
 	        if (isSuccessful)
 	        {
                 return Ok("Cập nhật thanh toán thành công");

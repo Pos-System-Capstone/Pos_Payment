@@ -213,14 +213,14 @@ public class TransactionService : BaseService<TransactionService>, ITransactionS
 	    return response;
     }
 
-    public async Task<bool> UpdateOrderStatusVietQrTransaction(Guid orderId, TransactionStatus transactionStatus)
+    public async Task<bool> UpdateOrderStatusVietQrTransaction(UpdateTransactionStatusRequest updateTransactionStatusRequest)
     {
 	    Order order = await _unitOfWork.GetRepository<Order>()
-		    .SingleOrDefaultAsync(predicate: x => x.Id.Equals(orderId));
+		    .SingleOrDefaultAsync(predicate: x => x.Id.Equals(updateTransactionStatusRequest.OrderId));
 	    if (order == null) throw new BadHttpRequestException("Không tìm thấy order");
 	    Transaction transaction = await _unitOfWork.GetRepository<Transaction>()
 		    .SingleOrDefaultAsync(predicate: x => x.OrderId.Equals(order.Id));
-	    transaction.Status = transactionStatus.GetDisplayName();
+	    transaction.Status = updateTransactionStatusRequest.TransactionStatus.GetDisplayName();
 		_unitOfWork.GetRepository<Transaction>().UpdateAsync(transaction);
 		return await _unitOfWork.CommitAsync() > 0;
     }

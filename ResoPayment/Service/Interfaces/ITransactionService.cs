@@ -21,5 +21,5 @@ public interface ITransactionService
 
 	Task<GetPaymentTypeOfOrder> GetPaymentTypeOfOrder(Guid orderId);
 
-	Task<bool> UpdateOrderStatusVietQrTransaction(Guid orderId, TransactionStatus transactionStatus);
+	Task<bool> UpdateOrderStatusVietQrTransaction(UpdateTransactionStatusRequest updateTransactionStatusRequest);
 }
