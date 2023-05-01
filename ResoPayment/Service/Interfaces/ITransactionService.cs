@@ -1,4 +1,5 @@
-﻿using ResoPayment.Payload.Request;
+﻿using ResoPayment.Enums;
+using ResoPayment.Payload.Request;
 using ResoPayment.Payload.Response;
 using ResoPayment.RedisModels;
 
@@ -19,4 +20,6 @@ public interface ITransactionService
     Task<OrderData> CheckTransactionStatus(string orderid);
 
 	Task<GetPaymentTypeOfOrder> GetPaymentTypeOfOrder(Guid orderId);
+
+	Task<bool> UpdateOrderStatusVietQrTransaction(Guid orderId, TransactionStatus transactionStatus);
 }

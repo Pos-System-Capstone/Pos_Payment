@@ -2,6 +2,7 @@
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.OpenApi.Extensions;
 using Newtonsoft.Json;
 using ResoPayment.ApplicationCore.Interfaces;
 using ResoPayment.Constants;
@@ -210,5 +211,17 @@ public class TransactionService : BaseService<TransactionService>, ITransactionS
 			    PicUrl = x.PaymentProvider.PicUrl
 		    }, predicate: x => x.OrderId.Equals(orderId));
 	    return response;
+    }
+
+    public async Task<bool> UpdateOrderStatusVietQrTransaction(Guid orderId, TransactionStatus transactionStatus)
+    {
+	    Order order = await _unitOfWork.GetRepository<Order>()
+		    .SingleOrDefaultAsync(predicate: x => x.Id.Equals(orderId));
+	    if (order == null) throw new BadHttpRequestException("Không tìm thấy order");
+	    Transaction transaction = await _unitOfWork.GetRepository<Transaction>()
+		    .SingleOrDefaultAsync(predicate: x => x.OrderId.Equals(order.Id));
+	    transaction.Status = transactionStatus.GetDisplayName();
+		_unitOfWork.GetRepository<Transaction>().UpdateAsync(transaction);
+		return await _unitOfWork.CommitAsync() > 0;
     }
 }

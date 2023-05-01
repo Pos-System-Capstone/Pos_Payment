@@ -23,6 +23,7 @@ public static class ApiEndPointConstant
 		public const string VnPayEndpoint = PaymentEndpoint + "/vnpay";
         public const string PaymentProviderEndpoint = PaymentEndpoint + "/payment-providers";
         public const string CheckTransactionStatus = ApiEndpoint + "/check-transaction-status";
+        public const string VietQrEndpoint = PaymentEndpoint + "/vietqr";
 	}
 
 }

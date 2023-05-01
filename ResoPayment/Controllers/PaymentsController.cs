@@ -8,6 +8,7 @@ using ResoPayment.Payload.Response;
 using ResoPayment.Service.Implements;
 using ResoPayment.Service.Interfaces;
 using System.Net;
+using ResoPayment.Enums;
 
 namespace ResoPayment.Controllers
 {
@@ -93,6 +94,20 @@ namespace ResoPayment.Controllers
         {
 	        var response = await _transactionService.GetPaymentTypeOfOrder(orderId);
 	        return Ok(response);
+        }
+
+        [Authorize]
+        [HttpPost(ApiEndPointConstant.Payment.VietQrEndpoint)]
+        public async Task<IActionResult> UpdateOrderStatusVietQrTransaction([FromBody] Guid orderId,
+	        [FromBody] TransactionStatus transactionStatus)
+        {
+	        var isSuccessful = await _transactionService.UpdateOrderStatusVietQrTransaction(orderId, transactionStatus);
+	        if (isSuccessful)
+	        {
+                return Ok("Cập nhật thanh toán thành công");
+	        }
+
+	        return Ok("Cập nhật thanh toán thất bại");
         }
     }
 }
