@@ -37,7 +37,7 @@ namespace ResoPayment.PaymentStrategy.PaymentStrategies
             param.Add("appuser", "User");
             param.Add("apptime", Utils.GetTimeStamp().ToString());
             param.Add("amount", _amount.ToString());
-            param.Add("apptransid", DateTime.Now.ToString("yyMMdd") + "_" + _orderId); // mã giao dich có định dạng yyMMdd_xxxx
+            param.Add("apptransid", DateTimeHelper.ConvertDateTimeToVietNamTimeZone().ToString("yyMMdd") + "_" + _orderId); // mã giao dich có định dạng yyMMdd_xxxx
             param.Add("embeddata", JsonConvert.SerializeObject(embeddata));
             param.Add("item", JsonConvert.SerializeObject(items));
             param.Add("description", _orderDescription);
