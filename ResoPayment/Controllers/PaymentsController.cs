@@ -45,7 +45,7 @@ namespace ResoPayment.Controllers
 			bool isSuccessful = await _transactionService.ExecuteVnPayCalBack(vnp_Amount, vnp_BankCode, vnp_BankTranNo,
 				vnp_CardType, vnp_OrderInfo, vnp_PayDate, vnp_ResponseCode, vnp_TmnCode, vnp_TransactionNo, vnp_TxnRef,
 				vnp_SecureHashType, vnp_SecureHash);
-			if (isSuccessful)
+			if (isSuccessful && vnp_ResponseCode.Equals("00"))
 			{
 				return RedirectPermanent("https://firebasestorage.googleapis.com/v0/b/pos-system-47f93.appspot.com/o/files%2Fpayment-done.png?alt=media&token=284c1b35-e4f2-417e-90e4-a339c4cd7a4e");
 			}
@@ -61,7 +61,7 @@ namespace ResoPayment.Controllers
             var isSuccessful = await _transactionService.ExecuteZaloPayCallBack(amount, discountamount, appid, checksum, apptransid,
 	            status);
 
-            if (isSuccessful)
+            if (isSuccessful && status == 1)
             {
                 return RedirectPermanent("https://firebasestorage.googleapis.com/v0/b/pos-system-47f93.appspot.com/o/files%2Fpayment-done.png?alt=media&token=284c1b35-e4f2-417e-90e4-a339c4cd7a4e");
             }
