@@ -1,8 +1,10 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 using ResoPayment.ApplicationCore.Interfaces;
 using ResoPayment.Infrastructure.Models;
 using ResoPayment.Infrastructure.PaymentConfigModels;
 using ResoPayment.Payload.Request;
+using ResoPayment.Payload.Response;
 using ResoPayment.Service.Interfaces;
 
 namespace ResoPayment.Service.Implements;
@@ -128,5 +130,58 @@ public class BrandService : BaseService<BrandService>, IBrandService
 		}
 
 		return false;
+	}
+
+	public async Task<GetBrandPaymentProviderMappingResponse> GetBrandPaymentProviderMapping(Guid brandId)
+	{
+		Brand brand = await _unitOfWork.GetRepository<Brand>()
+			.SingleOrDefaultAsync(predicate: x => x.Id.Equals(brandId));
+		if (brand == null) throw new BadHttpRequestException("Không tìm thấy brand");
+		GetBrandPaymentProviderMappingResponse getBrandPaymentProviderMappingResponse =
+			new GetBrandPaymentProviderMappingResponse()
+			{
+				BrandId = brand.Id,
+				BrandName = brand.Name,
+				BrandPhoneNumber = brand.PhoneNumber,
+			};
+		IEnumerable<BrandPaymentProviderMapping> brandPaymentProviderMappings = await _unitOfWork
+			.GetRepository<BrandPaymentProviderMapping>().GetListAsync(predicate: x => x.BrandId.Equals(brand.Id), include: x => x.Include(x => x.PaymentProvider));
+		foreach (var brandPaymentProviderMapping in brandPaymentProviderMappings)
+		{
+			if (brandPaymentProviderMapping.PaymentProvider.Type.ToUpper().Equals("VIETQR"))
+			{
+				VietQRConfig vietQrConfig =
+					JsonConvert.DeserializeObject<VietQRConfig>(brandPaymentProviderMapping.Config);
+				getBrandPaymentProviderMappingResponse.VietQrConfigRequest = new VietQRConfigRequest()
+				{
+					BankCode = vietQrConfig.BankCode,
+					AccountName = vietQrConfig.AccountName,
+					AccountNumber = vietQrConfig.AccountNo
+				};
+			}
+
+			if (brandPaymentProviderMapping.PaymentProvider.Type.ToUpper().Equals("ZALOPAY"))
+			{
+				ZaloPayConfig zaloPayConfig = JsonConvert.DeserializeObject<ZaloPayConfig>(brandPaymentProviderMapping.Config);
+				getBrandPaymentProviderMappingResponse.ZaloPayConfigRequest = new ZaloPayConfigRequest()
+				{
+					AppId = zaloPayConfig.AppId,
+					Key1 = zaloPayConfig.Key1,
+					Key2 = zaloPayConfig.Key2
+				};
+			}
+
+			if (brandPaymentProviderMapping.PaymentProvider.Type.ToUpper().Equals("VNPAY"))
+			{
+				VnPayConfig vnPayConfig =
+					JsonConvert.DeserializeObject<VnPayConfig>(brandPaymentProviderMapping.Config);
+				getBrandPaymentProviderMappingResponse.VnPayConfigRequest = new VnPayConfigRequest()
+				{
+					SecureHash = vnPayConfig.SecureHash,
+					TmnCode = vnPayConfig.TmnCode
+				};
+			}
+		}
+		return getBrandPaymentProviderMappingResponse;
 	}
 }

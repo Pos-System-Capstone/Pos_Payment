@@ -17,7 +17,7 @@ namespace ResoPayment.Controllers
 		}
 
 		[Authorize]
-		[HttpPost(ApiEndPointConstant.Brand.CreateBrandPaymentProviderMappingEndPoint)]
+		[HttpPost(ApiEndPointConstant.Brand.BrandPaymentProviderMappingEndPoint)]
 		public async Task<IActionResult> CreateBrandPaymentProviderMapping(
 			[FromBody] CreateBrandPaymentProviderMappingRequest request)
 		{
@@ -28,6 +28,14 @@ namespace ResoPayment.Controllers
 			}
 
 			return Ok("Tạo phương thức thanh toán thất bại");
+		}
+
+		[Authorize]
+		[HttpGet(ApiEndPointConstant.Brand.BrandPaymentProviderMappingEndPoint)]
+		public async Task<IActionResult> GetBrandPaymentProviderMapping(Guid id)
+		{
+			var brandPaymentProviderMappingReponse = await _brandService.GetBrandPaymentProviderMapping(id);
+			return Ok(brandPaymentProviderMappingReponse);
 		}
 	}
 }

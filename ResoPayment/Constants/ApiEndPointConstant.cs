@@ -30,7 +30,7 @@ public static class ApiEndPointConstant
 	{
 		public const string BrandEndpoint = ApiEndpoint + "/brands";
 
-		public const string CreateBrandPaymentProviderMappingEndPoint =
+		public const string BrandPaymentProviderMappingEndPoint =
 			BrandEndpoint + "/{id}/brandpaymentprovider";
 	}
 
