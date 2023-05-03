@@ -67,6 +67,7 @@ public static class DependencyService
         services.AddScoped<IZaloPayServices, ZaloPayService>();
         services.AddScoped<ITransactionService, TransactionService>();
         services.AddScoped<IPaymentProviderService, PaymentProviderService>();
+        services.AddScoped<IBrandService, BrandService>();
         return services;
     }
 

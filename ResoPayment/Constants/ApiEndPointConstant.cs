@@ -26,4 +26,12 @@ public static class ApiEndPointConstant
         public const string VietQrEndpoint = PaymentEndpoint + "/vietqr";
 	}
 
+	public static class Brand
+	{
+		public const string BrandEndpoint = ApiEndpoint + "/brands";
+
+		public const string CreateBrandPaymentProviderMappingEndPoint =
+			BrandEndpoint + "/{id}/brandpaymentprovider";
+	}
+
 }
