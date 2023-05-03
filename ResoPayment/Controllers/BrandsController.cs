@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using ResoPayment.Constants;
 using ResoPayment.Payload.Request;
+using ResoPayment.Payload.Response;
 using ResoPayment.Service.Interfaces;
 
 namespace ResoPayment.Controllers
@@ -32,6 +33,7 @@ namespace ResoPayment.Controllers
 
 		[Authorize]
 		[HttpGet(ApiEndPointConstant.Brand.BrandPaymentProviderMappingEndPoint)]
+		[ProducesResponseType(typeof(GetBrandPaymentProviderMappingResponse),StatusCodes.Status200OK)]
 		public async Task<IActionResult> GetBrandPaymentProviderMapping(Guid id)
 		{
 			var brandPaymentProviderMappingReponse = await _brandService.GetBrandPaymentProviderMapping(id);
