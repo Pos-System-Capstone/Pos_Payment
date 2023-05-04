@@ -96,7 +96,7 @@ public class TransactionService : BaseService<TransactionService>, ITransactionS
 		        InvoiceId = createPaymentRequest.InvoiceId,
 		        StoreId = store.Id,
 		        TotalAmount = createPaymentRequest.Amount,
-		        CheckOutDate = DateTime.UtcNow,
+		        CheckOutDate = DateTimeHelper.ConvertDateTimeToVietNamTimeZone(),
 	        };
 	        newOrder.Transaction = new Transaction()
 	        {

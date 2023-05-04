@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using ResoPayment.ApplicationCore.Interfaces;
+using ResoPayment.Helpers;
 using ResoPayment.Infrastructure.Models;
 using ResoPayment.Infrastructure.PaymentConfigModels;
 using ResoPayment.Payload.Request;
@@ -27,7 +28,7 @@ public class BrandService : BaseService<BrandService>, IBrandService
 				Name = request.BrandName,
 				PhoneNumber = request.BrandPhoneNumber,
 				Status = "Active",
-				CreateDate = DateTime.UtcNow
+				CreateDate = DateTimeHelper.ConvertDateTimeToVietNamTimeZone()
 			};
 			newBrand.Stores = new List<Store>();
 			request.CreateStoreRequests.ForEach(store =>
